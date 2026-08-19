@@ -19,6 +19,7 @@ import {
 import { createClient } from "@/lib/supabase/server"
 import { FeaturedProductsCarousel } from "@/components/featured-products-carousel"
 import { EcommerceProductCard } from "@/components/ecommerce-product-card"
+import { SkateWheelMark } from "@/components/decor/skate-wheel-mark"
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -134,9 +135,20 @@ export default async function HomePage() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
 
+        {/* Speed streak motion lines */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-full overflow-hidden" aria-hidden="true">
+          <span className="absolute top-[28%] h-[2px] w-24 bg-gradient-to-r from-transparent via-[#e0b64f] to-transparent animate-speed-streak" />
+          <span className="absolute top-[52%] h-[2px] w-32 bg-gradient-to-r from-transparent via-white/70 to-transparent animate-speed-streak [animation-delay:0.8s]" />
+          <span className="absolute top-[74%] h-[2px] w-20 bg-gradient-to-r from-transparent via-[#e0b64f] to-transparent animate-speed-streak [animation-delay:1.6s]" />
+        </div>
+
+        {/* Faint wheel mark watermark */}
+        <SkateWheelMark className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 text-white/10 animate-spin-slow" />
+
         <div className="container relative mx-auto flex h-full items-center px-4">
           <div className="max-w-sm rounded-xl bg-background/95 p-6 shadow-2xl backdrop-blur-sm md:p-7">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#bd9131] animate-hud-pulse" />
               Auriga Racing &mdash; 2025 Collection
             </p>
             <h1 className="mt-2 font-serif text-3xl font-bold uppercase leading-[1.08] tracking-tight text-foreground md:text-4xl text-balance">
@@ -169,8 +181,9 @@ export default async function HomePage() {
       </section>
 
       {/* Trust bar */}
-      <section className="border-y border-border/60 bg-neutral-950 text-white">
-        <div className="container mx-auto grid grid-cols-2 gap-3 px-4 py-3 sm:grid-cols-4">
+      <section className="relative overflow-hidden border-y border-border/60 bg-neutral-950 text-white">
+        <SkateWheelMark className="pointer-events-none absolute -right-6 top-1/2 hidden h-20 w-20 -translate-y-1/2 text-white/[0.06] animate-spin-slow md:block" />
+        <div className="container relative mx-auto grid grid-cols-2 gap-3 px-4 py-3 sm:grid-cols-4">
           {trustBar.map((item) => {
             const Icon = item.icon
             return (
@@ -192,8 +205,9 @@ export default async function HomePage() {
 
       {/* Best Sellers */}
       {bestSellers && bestSellers.length > 0 && (
-        <section className="bg-muted/40 py-10 md:py-14">
-          <div className="container mx-auto px-4">
+        <section className="relative overflow-hidden bg-muted/40 py-10 md:py-14">
+          <SkateWheelMark className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 text-foreground/[0.04] animate-spin-slow" />
+          <div className="container relative mx-auto px-4">
             <div className="mb-6 flex items-end justify-between gap-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">
@@ -218,8 +232,15 @@ export default async function HomePage() {
       )}
 
       {/* New Arrivals */}
-      <section className="bg-background py-10 md:py-14">
-        <div className="container mx-auto px-4">
+      <section className="relative overflow-hidden bg-background py-10 md:py-14">
+        <div
+          className="pointer-events-none absolute -left-8 bottom-0 h-24 w-48 opacity-[0.05]"
+          style={{
+            backgroundImage: "repeating-linear-gradient(-45deg, #bd9131 0px, #bd9131 2px, transparent 2px, transparent 12px)",
+          }}
+          aria-hidden="true"
+        />
+        <div className="container relative mx-auto px-4">
           <div className="mb-6 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Fresh Off the Line</p>
             <h2 className="mt-1 font-serif text-2xl font-bold tracking-tight text-foreground md:text-3xl">
@@ -294,8 +315,9 @@ export default async function HomePage() {
       )}
 
       {/* Shop by Collection */}
-      <section className="bg-background py-10 md:py-14">
-        <div className="container mx-auto px-4">
+      <section className="relative overflow-hidden bg-background py-10 md:py-14">
+        <SkateWheelMark className="pointer-events-none absolute -left-12 top-1/3 h-48 w-48 text-foreground/[0.035] animate-spin-slow" />
+        <div className="container relative mx-auto px-4">
           <div className="mb-6 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Curated Gear</p>
             <h2 className="mt-1 font-serif text-2xl font-bold uppercase tracking-wide text-foreground md:text-3xl">
@@ -339,6 +361,7 @@ export default async function HomePage() {
           }}
           aria-hidden="true"
         />
+        <SkateWheelMark className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 text-[#e0b64f]/10 animate-spin-slow" />
         <div className="container relative mx-auto px-4">
           <div className="mb-6 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#e0b64f]">Signature Series</p>
@@ -383,8 +406,8 @@ export default async function HomePage() {
       </section>
 
       {/* Performance Frames feature */}
-      <section className="bg-neutral-900 py-10 text-white md:py-14">
-        <div className="container mx-auto px-4">
+      <section className="relative overflow-hidden bg-neutral-900 py-10 text-white md:py-14">
+        <div className="container relative mx-auto px-4">
           <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row">
             <div className="flex-1">
               <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#e0b64f]">Performance Frames</p>
@@ -400,7 +423,9 @@ export default async function HomePage() {
               </Button>
             </div>
             <div className="relative h-44 w-full flex-1 md:h-56">
-              <Image src="/home/performance-frame.png" alt="Auriga Racing OCCULT frame" fill className="object-contain" />
+              <span className="absolute top-[20%] h-[2px] w-16 bg-gradient-to-r from-transparent via-[#e0b64f] to-transparent animate-speed-streak" />
+              <span className="absolute top-[70%] h-[2px] w-20 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-speed-streak [animation-delay:1s]" />
+              <Image src="/home/performance-frame.png" alt="Auriga Racing OCCULT frame" fill className="relative object-contain" />
             </div>
           </div>
         </div>
@@ -440,8 +465,9 @@ export default async function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="bg-background py-10 md:py-14">
-        <div className="container mx-auto px-4">
+      <section className="relative overflow-hidden bg-background py-10 md:py-14">
+        <SkateWheelMark className="pointer-events-none absolute -bottom-16 right-1/4 h-40 w-40 text-foreground/[0.035] animate-spin-slow" />
+        <div className="container relative mx-auto px-4">
           <div className="mb-6 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Trusted On Track</p>
             <h2 className="mt-1 font-serif text-2xl font-bold text-foreground md:text-3xl">What Athletes Say</h2>
@@ -475,8 +501,10 @@ export default async function HomePage() {
       </section>
 
       {/* Why Choose Auriga Racing */}
-      <section className="bg-muted/40 py-10 md:py-14">
-        <div className="container mx-auto px-4">
+      <section className="relative overflow-hidden bg-muted/40 py-10 md:py-14">
+        <SkateWheelMark className="pointer-events-none absolute -left-10 -top-10 h-36 w-36 text-foreground/[0.04] animate-spin-slow" />
+        <SkateWheelMark className="pointer-events-none absolute -bottom-14 right-0 h-40 w-40 text-foreground/[0.04] animate-spin-slow [animation-direction:reverse]" />
+        <div className="container relative mx-auto px-4">
           <div className="mb-6 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">The Difference</p>
             <h2 className="mt-1 font-serif text-2xl font-bold text-foreground md:text-3xl text-balance">
@@ -507,7 +535,11 @@ export default async function HomePage() {
           style={{ background: "linear-gradient(90deg, transparent, #bd9131, transparent)" }}
           aria-hidden="true"
         />
-        <div className="container mx-auto grid grid-cols-2 gap-6 px-4 text-center sm:grid-cols-4">
+        <span
+          className="pointer-events-none absolute top-1/2 h-[1px] w-24 -translate-y-1/2 bg-gradient-to-r from-transparent via-[#e0b64f]/60 to-transparent animate-speed-streak"
+          aria-hidden="true"
+        />
+        <div className="container relative mx-auto grid grid-cols-2 gap-6 px-4 text-center sm:grid-cols-4">
           {[
             { value: "12,400+", label: "Athletes Equipped" },
             { value: "38", label: "Countries Shipped" },

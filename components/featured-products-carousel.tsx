@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { getImageKitUrl } from "@/lib/imagekit"
+import { SkateWheelMark } from "@/components/decor/skate-wheel-mark"
 
 interface FeaturedProduct {
   id: string
@@ -26,8 +27,9 @@ export function FeaturedProductsCarousel({ products }: { products: FeaturedProdu
   }
 
   return (
-    <section className="bg-background py-10 md:py-14">
-      <div className="container mx-auto px-4">
+    <section className="relative overflow-hidden bg-background py-10 md:py-14">
+      <SkateWheelMark className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 text-foreground/[0.04] animate-spin-slow" />
+      <div className="container relative mx-auto px-4">
         <div className="mb-6 flex items-end justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Just In</p>
@@ -72,6 +74,10 @@ export function FeaturedProductsCarousel({ products }: { products: FeaturedProdu
                     alt={product.name}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <span
+                    className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-none group-hover:opacity-100 group-hover:translate-x-full group-hover:duration-700"
+                    aria-hidden="true"
                   />
                 </Link>
                 <div className="flex flex-1 flex-col p-3.5">

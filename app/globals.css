@@ -77,7 +77,7 @@
 @theme inline {
   --font-sans: "Geist", "Geist Fallback";
   --font-mono: "Geist Mono", "Geist Mono Fallback";
-  --font-serif: "Bodoni Moda", "Bodoni Moda Fallback", serif;
+  --font-serif: "Rajdhani", "Rajdhani Fallback", sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -171,4 +171,50 @@
 
 .animation-delay-200 {
   animation-delay: 0.2s;
+}
+
+/* Sporty motion effects: spinning wheel marks, speed streaks, HUD glow */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 12s linear infinite;
+}
+
+@keyframes speed-streak {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(220%);
+    opacity: 0;
+  }
+}
+
+.animate-speed-streak {
+  animation: speed-streak 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes hud-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.animate-hud-pulse {
+  animation: hud-pulse 1.8s ease-in-out infinite;
 }
