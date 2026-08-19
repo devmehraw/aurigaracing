@@ -1,24 +1,67 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Award, Hammer, Globe, Headphones, ArrowRight, Check } from "lucide-react"
+import {
+  Award,
+  Hammer,
+  Globe,
+  Headphones,
+  ArrowRight,
+  Check,
+  Truck,
+  ShieldCheck,
+  RotateCcw,
+  Lock,
+  Star,
+  Quote,
+  Flame,
+} from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { FeaturedProductsCarousel } from "@/components/featured-products-carousel"
+import { EcommerceProductCard } from "@/components/ecommerce-product-card"
 
 export default async function HomePage() {
   const supabase = await createClient()
 
-  const { data: featuredProducts, error: featuredError } = await supabase
-    .from("products")
-    .select("id, slug, name, image_url, price_in_cents")
-    .eq("is_active", true)
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(10)
+  const baseFields =
+    "id, slug, name, image_url, brand, price_in_cents, original_price_in_cents, discount_percentage, stock_quantity, is_featured, is_new, rating, review_count"
+
+  const [{ data: featuredProducts, error: featuredError }, { data: bestSellers }, { data: dealProducts }] =
+    await Promise.all([
+      supabase
+        .from("products")
+        .select("id, slug, name, image_url, price_in_cents")
+        .eq("is_active", true)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(10),
+      supabase
+        .from("products")
+        .select(baseFields)
+        .eq("is_active", true)
+        .eq("status", "published")
+        .eq("is_featured", true)
+        .order("rating", { ascending: false })
+        .limit(4),
+      supabase
+        .from("products")
+        .select(baseFields)
+        .eq("is_active", true)
+        .eq("status", "published")
+        .eq("deal_of_the_day", true)
+        .limit(4),
+    ])
 
   if (featuredError) {
     console.error("[v0] Error fetching featured products:", featuredError)
   }
+
+  const trustBar = [
+    { icon: Truck, label: "Free Worldwide Shipping" },
+    { icon: ShieldCheck, label: "2-Year Warranty" },
+    { icon: RotateCcw, label: "30-Day Returns" },
+    { icon: Lock, label: "Secure Checkout" },
+  ]
 
   const newArrivals = [
     {
@@ -57,10 +100,31 @@ export default async function HomePage() {
     { icon: Headphones, title: "24/7 Expert Support", description: "Dedicated support whenever you need it." },
   ]
 
+  const testimonials = [
+    {
+      name: "Marcus Reyes",
+      role: "National Team Sprinter",
+      image: "/home/athlete-1.png",
+      quote: "The OCCULT frames shaved real seconds off my splits. Nothing on the market feels this locked-in.",
+    },
+    {
+      name: "Elena Cruz",
+      role: "Marathon Skater",
+      image: "/home/athlete-2.png",
+      quote: "Auriga boots molded to my feet in one session. Support, comfort, precision — every box checked.",
+    },
+    {
+      name: "Coach D. Whitfield",
+      role: "Junior Development Coach",
+      image: "/home/athlete-3.png",
+      quote: "I outfit my entire roster in Auriga. Consistent quality and it holds up to a full competitive season.",
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
-      <section className="relative h-[520px] w-full overflow-hidden bg-black md:h-[600px]">
+      <section className="relative h-[440px] w-full overflow-hidden bg-black md:h-[500px]">
         <Image
           src="/home/hero-skater.png"
           alt="Professional speed skater racing on a track"
@@ -68,41 +132,56 @@ export default async function HomePage() {
           priority
           className="object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
 
         <div className="container relative mx-auto flex h-full items-center px-4">
-          <div className="max-w-md rounded-2xl bg-background/95 p-8 shadow-2xl backdrop-blur-sm md:p-10">
-            <h1 className="text-4xl font-extrabold uppercase leading-[1.05] tracking-tight text-foreground md:text-5xl text-balance">
+          <div className="max-w-sm rounded-xl bg-background/95 p-6 shadow-2xl backdrop-blur-sm md:p-7">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">
+              Auriga Racing &mdash; 2025 Collection
+            </p>
+            <h1 className="mt-2 font-serif text-3xl font-bold uppercase leading-[1.08] tracking-tight text-foreground md:text-4xl text-balance">
               Precision Engineered. Race Proven.
             </h1>
-            <p className="mt-4 text-sm font-medium uppercase tracking-wide text-muted-foreground md:text-base leading-relaxed">
+            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground leading-relaxed">
               Dominate the track. Explore our elite skating tech.
             </p>
-            <Button
-              asChild
-              size="lg"
-              className="mt-6 rounded-md bg-[#bd9131] px-8 text-white hover:bg-[#a17d27]"
-            >
+            <Button asChild size="sm" className="mt-5 rounded-md bg-[#bd9131] px-6 text-white hover:bg-[#a17d27]">
               <Link href="/products">Shop Now</Link>
             </Button>
           </div>
         </div>
 
         {/* New Collection badge */}
-        <div className="absolute bottom-6 right-6 flex items-center gap-3 rounded-xl bg-background/95 px-5 py-3 shadow-xl backdrop-blur-sm">
+        <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg bg-background/95 px-3 py-2 shadow-xl backdrop-blur-sm">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-[#bd9131]">New</p>
-            <p className="text-sm font-bold uppercase tracking-wide text-foreground">Collection</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#bd9131]">New</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-foreground">Collection</p>
           </div>
           <div
-            className="h-8 w-8 rounded"
+            className="h-6 w-6 rounded"
             style={{
-              backgroundImage:
-                "repeating-conic-gradient(#000 0% 25%, #fff 0% 50%)",
-              backgroundSize: "8px 8px",
+              backgroundImage: "repeating-conic-gradient(#000 0% 25%, #fff 0% 50%)",
+              backgroundSize: "6px 6px",
             }}
             aria-hidden="true"
           />
+        </div>
+      </section>
+
+      {/* Trust bar */}
+      <section className="border-y border-border/60 bg-neutral-950 text-white">
+        <div className="container mx-auto grid grid-cols-2 gap-3 px-4 py-3 sm:grid-cols-4">
+          {trustBar.map((item) => {
+            const Icon = item.icon
+            return (
+              <div key={item.label} className="flex items-center justify-center gap-2">
+                <Icon className="h-4 w-4 shrink-0 text-[#e0b64f]" />
+                <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-300">
+                  {item.label}
+                </span>
+              </div>
+            )
+          })}
         </div>
       </section>
 
@@ -111,19 +190,48 @@ export default async function HomePage() {
         <FeaturedProductsCarousel products={featuredProducts} />
       )}
 
+      {/* Best Sellers */}
+      {bestSellers && bestSellers.length > 0 && (
+        <section className="bg-muted/40 py-10 md:py-14">
+          <div className="container mx-auto px-4">
+            <div className="mb-6 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">
+                  Top Rated
+                </p>
+                <h2 className="mt-1 font-serif text-2xl font-bold text-foreground md:text-3xl">Best Sellers</h2>
+              </div>
+              <Link
+                href="/products"
+                className="hidden items-center gap-1 text-xs font-semibold uppercase tracking-wide text-[#bd9131] hover:text-[#a17d27] sm:flex"
+              >
+                View All <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+              {bestSellers.map((product) => (
+                <EcommerceProductCard key={product.id} product={product} variant="compact" />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* New Arrivals */}
-      <section className="bg-muted/50 py-16 md:py-24">
+      <section className="bg-background py-10 md:py-14">
         <div className="container mx-auto px-4">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">New Arrivals</h2>
-            <p className="mt-3 text-muted-foreground">The latest gear from the Auriga Racing lineup</p>
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Fresh Off the Line</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+              New Arrivals
+            </h2>
           </div>
 
-          <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+          <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
             {newArrivals.map((item) => (
               <div
                 key={item.title}
-                className="group flex flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-shadow duration-300 hover:shadow-xl"
+                className="group flex flex-col overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-border/60 transition-shadow duration-300 hover:shadow-lg"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-muted">
                   <Image
@@ -133,12 +241,13 @@ export default async function HomePage() {
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
-                <div className="flex flex-1 flex-col p-6">
-                  <h3 className="text-xl font-bold text-foreground">{item.title}</h3>
-                  <p className="mt-2 flex-1 leading-relaxed text-muted-foreground">{item.description}</p>
+                <div className="flex flex-1 flex-col p-4">
+                  <h3 className="font-serif text-base font-bold text-foreground">{item.title}</h3>
+                  <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
                   <Button
                     asChild
-                    className="mt-5 w-fit rounded-md bg-[#bd9131] px-6 text-white hover:bg-[#a17d27]"
+                    size="sm"
+                    className="mt-3 w-fit rounded-md bg-[#bd9131] px-4 text-xs text-white hover:bg-[#a17d27]"
                   >
                     <Link href={item.href}>Shop Now</Link>
                   </Button>
@@ -149,22 +258,57 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Limited Time Offers */}
+      {dealProducts && dealProducts.length > 0 && (
+        <section className="relative overflow-hidden bg-neutral-950 py-10 text-white md:py-14">
+          <div
+            className="absolute -left-16 -top-16 h-40 w-40 rotate-12 opacity-20"
+            style={{
+              backgroundImage: "repeating-conic-gradient(#e0b64f 0% 25%, transparent 0% 50%)",
+              backgroundSize: "16px 16px",
+            }}
+            aria-hidden="true"
+          />
+          <div className="container relative mx-auto px-4">
+            <div className="mb-6 flex items-end justify-between gap-4">
+              <div>
+                <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#e0b64f]">
+                  <Flame className="h-3 w-3" /> Limited Time
+                </p>
+                <h2 className="mt-1 font-serif text-2xl font-bold md:text-3xl">Race Day Offers</h2>
+              </div>
+              <Link
+                href="/products?deal=true"
+                className="hidden items-center gap-1 text-xs font-semibold uppercase tracking-wide text-[#e0b64f] hover:text-white sm:flex"
+              >
+                Shop Deals <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+              {dealProducts.map((product) => (
+                <EcommerceProductCard key={product.id} product={product} variant="compact" />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Shop by Collection */}
-      <section className="bg-background py-16 md:py-24">
+      <section className="bg-background py-10 md:py-14">
         <div className="container mx-auto px-4">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold uppercase tracking-wide text-foreground md:text-5xl">
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Curated Gear</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold uppercase tracking-wide text-foreground md:text-3xl">
               Shop by Collection
             </h2>
-            <p className="mt-3 text-muted-foreground">Discover our specialized equipment collections</p>
           </div>
 
-          <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2">
+          <div className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-2">
             {collections.map((collection) => (
               <Link
                 key={collection.label}
                 href={collection.href}
-                className="group relative block h-56 overflow-hidden rounded-2xl bg-black md:h-64"
+                className="group relative block h-40 overflow-hidden rounded-xl bg-black md:h-48"
               >
                 <Image
                   src={collection.image || "/placeholder.svg"}
@@ -173,10 +317,10 @@ export default async function HomePage() {
                   className="object-cover opacity-80 transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-6">
-                  <h3 className="text-2xl font-bold text-white">{collection.label}</h3>
-                  <span className="mt-1 inline-flex items-center text-sm font-medium text-[#e0b64f] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    Explore <ArrowRight className="ml-1 h-4 w-4" />
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <h3 className="font-serif text-lg font-bold text-white">{collection.label}</h3>
+                  <span className="mt-0.5 inline-flex items-center text-xs font-medium text-[#e0b64f] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    Explore <ArrowRight className="ml-1 h-3.5 w-3.5" />
                   </span>
                 </div>
               </Link>
@@ -186,7 +330,7 @@ export default async function HomePage() {
       </section>
 
       {/* Precision Boots feature */}
-      <section className="relative overflow-hidden bg-neutral-950 py-16 text-white md:py-24">
+      <section className="relative overflow-hidden bg-neutral-950 py-10 text-white md:py-14">
         <div
           className="absolute inset-0 opacity-20"
           style={{
@@ -196,12 +340,14 @@ export default async function HomePage() {
           aria-hidden="true"
         />
         <div className="container relative mx-auto px-4">
-          <div className="mb-10 text-center">
-            <h2 className="text-3xl font-bold uppercase tracking-wide md:text-5xl">Precision Boots</h2>
-            <p className="mt-3 text-neutral-400">Handcrafted carbon fiber built for champions</p>
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#e0b64f]">Signature Series</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold uppercase tracking-wide md:text-3xl">
+              Precision Boots
+            </h2>
           </div>
-          <div className="mx-auto flex max-w-5xl flex-col items-center gap-10 md:flex-row">
-            <div className="relative h-64 w-full flex-1 md:h-80">
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row">
+            <div className="relative h-52 w-full flex-1 md:h-64">
               <div
                 className="absolute inset-0 opacity-60"
                 style={{
@@ -217,22 +363,18 @@ export default async function HomePage() {
               />
             </div>
             <div className="flex-1">
-              <h3 className="text-3xl font-bold text-[#e0b64f]">Auriga Racing Pro</h3>
-              <ul className="mt-6 space-y-4">
+              <h3 className="font-serif text-xl font-bold text-[#e0b64f]">Auriga Racing Pro</h3>
+              <ul className="mt-3 space-y-2.5">
                 {["Heat-moldable carbon", "Integrated ankle support", "High-strength materials"].map((feature) => (
-                  <li key={feature} className="flex items-center gap-3 text-lg text-neutral-200">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#bd9131]">
-                      <Check className="h-4 w-4 text-white" />
+                  <li key={feature} className="flex items-center gap-2.5 text-sm text-neutral-200">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#bd9131]">
+                      <Check className="h-3 w-3 text-white" />
                     </span>
                     {feature}
                   </li>
                 ))}
               </ul>
-              <Button
-                asChild
-                size="lg"
-                className="mt-8 rounded-md bg-[#bd9131] px-8 text-white hover:bg-[#a17d27]"
-              >
+              <Button asChild size="sm" className="mt-5 rounded-md bg-[#bd9131] px-6 text-white hover:bg-[#a17d27]">
                 <Link href="/products/category/boots">Shop Now</Link>
               </Button>
             </div>
@@ -241,27 +383,23 @@ export default async function HomePage() {
       </section>
 
       {/* Performance Frames feature */}
-      <section className="bg-neutral-900 py-16 text-white md:py-24">
+      <section className="bg-neutral-900 py-10 text-white md:py-14">
         <div className="container mx-auto px-4">
-          <div className="mx-auto flex max-w-5xl flex-col items-center gap-10 md:flex-row">
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row">
             <div className="flex-1">
-              <p className="text-sm font-bold uppercase tracking-widest text-[#e0b64f]">Performance Frames</p>
-              <h2 className="mt-3 text-3xl font-bold leading-tight md:text-4xl text-balance">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#e0b64f]">Performance Frames</p>
+              <h2 className="mt-2 font-serif text-2xl font-bold leading-tight md:text-3xl text-balance">
                 Auriga Racing OCCULT Frames
               </h2>
-              <p className="mt-4 leading-relaxed text-neutral-300">
+              <p className="mt-3 text-sm leading-relaxed text-neutral-300">
                 Laser-engraved, precision-machined aluminum frames engineered for exceptional performance in
                 intense high-speed racing.
               </p>
-              <Button
-                asChild
-                size="lg"
-                className="mt-6 rounded-md bg-[#bd9131] px-8 text-white hover:bg-[#a17d27]"
-              >
+              <Button asChild size="sm" className="mt-5 rounded-md bg-[#bd9131] px-6 text-white hover:bg-[#a17d27]">
                 <Link href="/products/category/frames">Shop Now</Link>
               </Button>
             </div>
-            <div className="relative h-56 w-full flex-1 md:h-72">
+            <div className="relative h-44 w-full flex-1 md:h-56">
               <Image src="/home/performance-frame.png" alt="Auriga Racing OCCULT frame" fill className="object-contain" />
             </div>
           </div>
@@ -269,61 +407,120 @@ export default async function HomePage() {
       </section>
 
       {/* Race-Ready Kits feature */}
-      <section className="relative overflow-hidden bg-muted/40 py-16 md:py-24">
+      <section className="relative overflow-hidden bg-muted/40 py-10 md:py-14">
         <div
-          className="absolute -right-10 top-8 hidden h-24 w-72 -rotate-12 opacity-70 md:block"
+          className="absolute -right-10 top-6 hidden h-20 w-60 -rotate-12 opacity-70 md:block"
           style={{
             backgroundImage: "repeating-conic-gradient(#171717 0% 25%, #e0b64f 0% 50%)",
-            backgroundSize: "24px 24px",
+            backgroundSize: "20px 20px",
           }}
           aria-hidden="true"
         />
         <div className="container relative mx-auto px-4">
-          <div className="mx-auto flex max-w-5xl flex-col items-center gap-10 md:flex-row">
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row">
             <div className="flex-1">
-              <h2 className="text-3xl font-bold uppercase tracking-wide text-foreground md:text-4xl text-balance">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Complete Setup</p>
+              <h2 className="mt-1 font-serif text-2xl font-bold uppercase tracking-wide text-foreground md:text-3xl text-balance">
                 Race-Ready Kits
               </h2>
-              <h3 className="mt-3 text-2xl font-bold text-foreground">Auriga Racing Cadet Inline Skate</h3>
-              <p className="mt-4 leading-relaxed text-muted-foreground">
+              <h3 className="mt-2 text-lg font-bold text-foreground">Auriga Racing Cadet Inline Skate</h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 The quality and versatility of a complete race setup for both training and competition, with
                 transformation from a three-wheel to four-wheel configuration.
               </p>
-              <Button
-                asChild
-                size="lg"
-                className="mt-6 rounded-md bg-[#bd9131] px-8 text-white hover:bg-[#a17d27]"
-              >
+              <Button asChild size="sm" className="mt-5 rounded-md bg-[#bd9131] px-6 text-white hover:bg-[#a17d27]">
                 <Link href="/products">Shop Now</Link>
               </Button>
             </div>
-            <div className="relative h-56 w-full flex-1 md:h-72">
+            <div className="relative h-44 w-full flex-1 md:h-56">
               <Image src="/home/cadet-skate.png" alt="Auriga Racing Cadet inline skate" fill className="object-contain" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Why Choose Auriga Racing */}
-      <section className="bg-background py-16 md:py-20">
+      {/* Testimonials */}
+      <section className="bg-background py-10 md:py-14">
         <div className="container mx-auto px-4">
-          <h2 className="mb-12 text-center text-3xl font-bold text-foreground md:text-4xl text-balance">
-            Why Choose Auriga Racing
-          </h2>
-          <div className="mx-auto grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Trusted On Track</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold text-foreground md:text-3xl">What Athletes Say</h2>
+          </div>
+          <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
+            {testimonials.map((t) => (
+              <div
+                key={t.name}
+                className="flex flex-col rounded-xl border border-border/60 bg-card p-5 shadow-sm"
+              >
+                <Quote className="h-5 w-5 text-[#bd9131]/50" />
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">{t.quote}</p>
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-border">
+                    <Image src={t.image || "/placeholder.svg"} alt={t.name} fill className="object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                  <div className="ml-auto flex items-center gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-3 w-3 fill-[#bd9131] text-[#bd9131]" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Auriga Racing */}
+      <section className="bg-muted/40 py-10 md:py-14">
+        <div className="container mx-auto px-4">
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">The Difference</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold text-foreground md:text-3xl text-balance">
+              Why Choose Auriga Racing
+            </h2>
+          </div>
+          <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {whyChoose.map((item) => {
               const Icon = item.icon
               return (
                 <div key={item.title} className="flex flex-col items-center text-center">
-                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#bd9131]/15">
-                    <Icon className="h-8 w-8 text-[#bd9131]" />
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#bd9131]/15">
+                    <Icon className="h-5 w-5 text-[#bd9131]" />
                   </div>
-                  <h3 className="text-base font-bold text-foreground">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+                  <h3 className="text-sm font-bold text-foreground">{item.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.description}</p>
                 </div>
               )
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Race Stats strip */}
+      <section className="relative overflow-hidden bg-neutral-950 py-8 text-white md:py-10">
+        <div
+          className="absolute inset-x-0 top-0 h-1"
+          style={{ background: "linear-gradient(90deg, transparent, #bd9131, transparent)" }}
+          aria-hidden="true"
+        />
+        <div className="container mx-auto grid grid-cols-2 gap-6 px-4 text-center sm:grid-cols-4">
+          {[
+            { value: "12,400+", label: "Athletes Equipped" },
+            { value: "38", label: "Countries Shipped" },
+            { value: "4.9/5", label: "Average Rating" },
+            { value: "07", label: "World Records Set" },
+          ].map((stat) => (
+            <div key={stat.label} className="flex flex-col items-center">
+              <span className="font-serif text-2xl font-bold text-[#e0b64f] md:text-3xl">{stat.value}</span>
+              <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
+                {stat.label}
+              </span>
+            </div>
+          ))}
         </div>
       </section>
     </div>
