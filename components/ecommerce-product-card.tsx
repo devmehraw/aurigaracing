@@ -100,6 +100,12 @@ export function EcommerceProductCard({
           {/* Overlay gradient on hover */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
+          {/* Speed-sweep effect on hover */}
+          <div
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-none group-hover:opacity-100 group-hover:translate-x-full group-hover:duration-700"
+            aria-hidden="true"
+          />
+
           {/* Top Badges */}
           <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
             {isOnSale && product.discount_percentage && (

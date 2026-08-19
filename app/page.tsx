@@ -1,971 +1,558 @@
-import { Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Truck, Shield, Clock, Headphones, ArrowRight } from "lucide-react"
-import { getImageKitUrl } from "@/lib/imagekit"
-import { Hero3DScene } from "@/components/hero-3d-scene"
-import { AnimatedParticles } from "@/components/animated-particles"
-import { Hoodie3D } from "@/components/hoodie-3d"
+import {
+  Award,
+  Hammer,
+  Globe,
+  Headphones,
+  ArrowRight,
+  Check,
+  Truck,
+  ShieldCheck,
+  RotateCcw,
+  Lock,
+  Star,
+  Quote,
+  Flame,
+} from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
-import Bootie3D from "@/components/bootie-3d"
-import { Helmet3D } from "@/components/helmet-3d"
-import { HeroBannerSlider } from "@/components/hero-banner-slider" // Added hero banner slider import
-import Frame3DClouds from "@/components/frame-3d-clouds"
-import BootGrey3D from "@/components/boot-grey-3d" // Imported BootGrey3D
-import Wheel3D from "@/components/wheel-3d" // Added Wheel3D import
-import { CadetSkate3D } from "@/components/cadet-skate-3d" // Added CadetSkate3D import
-import { BootBanner3D } from "@/components/boot-banner-3d"
+import { FeaturedProductsCarousel } from "@/components/featured-products-carousel"
 import { EcommerceProductCard } from "@/components/ecommerce-product-card"
+import { SkateWheelMark } from "@/components/decor/skate-wheel-mark"
 
 export default async function HomePage() {
   const supabase = await createClient()
 
-  const { data: dealProducts, error: dealError } = await supabase
-    .from("products")
-    .select("*")
-    .eq("is_active", true)
-    .eq("deal_of_the_day", true)
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(6)
+  const baseFields =
+    "id, slug, name, image_url, brand, price_in_cents, original_price_in_cents, discount_percentage, stock_quantity, is_featured, is_new, rating, review_count"
 
-  if (dealError) {
-    console.error("[v0] Error fetching deal products:", dealError)
+  const [{ data: featuredProducts, error: featuredError }, { data: bestSellers }, { data: dealProducts }] =
+    await Promise.all([
+      supabase
+        .from("products")
+        .select("id, slug, name, image_url, price_in_cents")
+        .eq("is_active", true)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(10),
+      supabase
+        .from("products")
+        .select(baseFields)
+        .eq("is_active", true)
+        .eq("status", "published")
+        .eq("is_featured", true)
+        .order("rating", { ascending: false })
+        .limit(4),
+      supabase
+        .from("products")
+        .select(baseFields)
+        .eq("is_active", true)
+        .eq("status", "published")
+        .eq("deal_of_the_day", true)
+        .limit(4),
+    ])
+
+  if (featuredError) {
+    console.error("[v0] Error fetching featured products:", featuredError)
   }
 
-  const { data: categories, error: categoriesError } = await supabase
-    .from("categories")
-    .select("*")
-    .eq("is_active", true)
-    .is("parent_id", null)
-    .order("name")
+  const trustBar = [
+    { icon: Truck, label: "Free Worldwide Shipping" },
+    { icon: ShieldCheck, label: "2-Year Warranty" },
+    { icon: RotateCcw, label: "30-Day Returns" },
+    { icon: Lock, label: "Secure Checkout" },
+  ]
 
-  if (categoriesError) {
-    console.error("[v0] Error fetching categories:", categoriesError)
-  }
+  const newArrivals = [
+    {
+      title: "Featured Helmet",
+      description: "Aerodynamic protection engineered for elite speed skating performance.",
+      image: "/home/arrival-helmet.png",
+      href: "/products/category/helmets",
+    },
+    {
+      title: "Race Boots",
+      description: "Handcrafted carbon fiber boots built for precision and control on the track.",
+      image: "/home/arrival-boots.png",
+      href: "/products/category/boots",
+    },
+    {
+      title: "Elite Wheels",
+      description: "Professional grade wheels tuned for maximum speed and grip in any condition.",
+      image: "/home/arrival-wheels.png",
+      href: "/products/category/wheels",
+    },
+  ]
 
-  const { data: inlineSkatingCategory, error: inlineError } = await supabase
-    .from("categories")
-    .select("id")
-    .eq("slug", "inline-speed-skating")
-    .eq("is_active", true)
-    .maybeSingle()
+  const collections = [
+    { label: "Boots", image: "/home/arrival-boots.png", href: "/products/category/boots" },
+    { label: "Frames", image: "/home/collection-frames.png", href: "/products/category/frames" },
+    { label: "Wheels", image: "/home/arrival-wheels.png", href: "/products/category/wheels" },
+    { label: "Helmets", image: "/home/arrival-helmet.png", href: "/products/category/helmets" },
+    { label: "Skate Packages", image: "/home/cadet-skate.png", href: "/products" },
+    { label: "Accessories", image: "/home/collection-accessories.png", href: "/products" },
+  ]
 
-  if (inlineError) {
-    console.error("[v0] Error fetching inline category:", inlineError)
-  }
+  const whyChoose = [
+    { icon: Award, title: "Race Proven Technology", description: "Engineered and tested by champions." },
+    { icon: Hammer, title: "Handcrafted Perfection", description: "Purely handmade with the finest materials." },
+    { icon: Globe, title: "Worldwide Shipping", description: "Delivering elite gear across the globe." },
+    { icon: Headphones, title: "24/7 Expert Support", description: "Dedicated support whenever you need it." },
+  ]
 
-  const { data: bootsCategory, error: bootsError } = await supabase
-    .from("categories")
-    .select("id")
-    .ilike("name", "%boots%")
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle()
-
-  if (bootsError) {
-    console.error("[v0] Error fetching boots category:", bootsError)
-  }
-
-  const { data: framesCategory, error: framesError } = await supabase
-    .from("categories")
-    .select("id")
-    .ilike("name", "%frames%")
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle()
-
-  if (framesError) {
-    console.error("[v0] Error fetching frames category:", framesError)
-  }
-
-  const { data: wheelsCategory, error: wheelsError } = await supabase
-    .from("categories")
-    .select("id")
-    .ilike("name", "%wheels%")
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle()
-
-  if (wheelsError) {
-    console.error("[v0] Error fetching wheels category:", wheelsError)
-  }
-
-  const { data: packagesCategory, error: packagesError } = await supabase
-    .from("categories")
-    .select("id")
-    .ilike("name", "%packages%")
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle()
-
-  if (packagesError) {
-    console.error("[v0] Error fetching packages category:", packagesError)
-  }
-
-  let inlineProducts: any[] = []
-  let bootsProducts: any[] = []
-  let framesProducts: any[] = []
-  let wheelsProducts: any[] = []
-  let packagesProducts: any[] = []
-
-  if (inlineSkatingCategory?.id) {
-    // Changed variable name to match original fetch
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, product_categories!inner(category_id)") // Adjusted select to include product_categories relationship
-      .eq("product_categories.category_id", inlineSkatingCategory.id) // Changed variable name
-      .eq("is_active", true)
-      .eq("status", "published")
-      .limit(8)
-
-    if (error) {
-      console.error("[v0] Error fetching inline products:", error)
-    } else {
-      inlineProducts = data || []
-    }
-  }
-
-  if (bootsCategory?.id) {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, product_categories!inner(category_id)")
-      .eq("product_categories.category_id", bootsCategory.id)
-      .eq("is_active", true)
-      .eq("status", "published")
-      .limit(8)
-
-    if (error) {
-      console.error("[v0] Error fetching boots products:", error)
-    } else {
-      bootsProducts = data || []
-    }
-  }
-
-  if (framesCategory?.id) {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, product_categories!inner(category_id)")
-      .eq("product_categories.category_id", framesCategory.id)
-      .eq("is_active", true)
-      .eq("status", "published")
-      .limit(8)
-
-    if (error) {
-      console.error("[v0] Error fetching frames products:", error)
-    } else {
-      framesProducts = data || []
-    }
-  }
-
-  if (wheelsCategory?.id) {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, product_categories!inner(category_id)")
-      .eq("product_categories.category_id", wheelsCategory.id)
-      .eq("is_active", true)
-      .eq("status", "published")
-      .limit(8)
-
-    if (error) {
-      console.error("[v0] Error fetching wheels products:", error)
-    } else {
-      wheelsProducts = data || []
-    }
-  }
-
-  if (packagesCategory?.id) {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, product_categories!inner(category_id)")
-      .eq("product_categories.category_id", packagesCategory.id)
-      .eq("is_active", true)
-      .eq("status", "published")
-      .limit(8) // Changed limit to 8 for consistency with other product fetches
-
-    if (error) {
-      console.error("[v0] Error fetching packages products:", error)
-    } else {
-      packagesProducts = data || []
-    }
-  }
+  const testimonials = [
+    {
+      name: "Marcus Reyes",
+      role: "National Team Sprinter",
+      image: "/home/athlete-1.png",
+      quote: "The OCCULT frames shaved real seconds off my splits. Nothing on the market feels this locked-in.",
+    },
+    {
+      name: "Elena Cruz",
+      role: "Marathon Skater",
+      image: "/home/athlete-2.png",
+      quote: "Auriga boots molded to my feet in one session. Support, comfort, precision — every box checked.",
+    },
+    {
+      name: "Coach D. Whitfield",
+      role: "Junior Development Coach",
+      image: "/home/athlete-3.png",
+      quote: "I outfit my entire roster in Auriga. Consistent quality and it holds up to a full competitive season.",
+    },
+  ]
 
   return (
-    <div className="min-h-screen">
-      <section className="relative bg-black text-white overflow-hidden h-[600px] md:h-[700px]">
-        {/* 3D WebGL Background */}
-        <Hero3DScene />
-
-        {/* Animated Particles */}
-        <AnimatedParticles />
-
-        {/* Banner Slider */}
-        <HeroBannerSlider />
-      </section>
-
-      <section className="py-12 bg-gradient-to-r from-neutral-50 to-neutral-100">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-xl md:text-2xl font-light text-neutral-800 italic text-balance leading-relaxed">
-            &quot;Auriga Racing: True Racing...The Outcome of several year&apos;s research and hard work&quot;
-          </p>
-        </div>
-      </section>
-
-      {dealProducts && dealProducts.length > 0 && (
-        <section className="bg-gradient-to-br from-[#bd9131]/10 to-[#bd9131]/5 py-16 md:py-24">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 uppercase tracking-wide">DEAL OF THE DAY</h2>
-              <p className="text-lg text-muted-foreground mb-6">Ends In</p>
-              <div className="flex gap-4 justify-center items-center">
-                <div className="text-center">
-                  <div className="bg-black text-white px-6 py-4 rounded-lg text-2xl md:text-3xl font-bold min-w-[80px]">
-                    00
-                  </div>
-                  <p className="text-sm mt-2 font-medium">Days</p>
-                </div>
-                <div className="text-2xl font-bold">:</div>
-                <div className="text-center">
-                  <div className="bg-black text-white px-6 py-4 rounded-lg text-2xl md:text-3xl font-bold min-w-[80px]">
-                    23
-                  </div>
-                  <p className="text-sm mt-2 font-medium">Hours</p>
-                </div>
-                <div className="text-2xl font-bold">:</div>
-                <div className="text-center">
-                  <div className="bg-black text-white px-6 py-4 rounded-lg text-2xl md:text-3xl font-bold min-w-[80px]">
-                    59
-                  </div>
-                  <p className="text-sm mt-2 font-medium">Minutes</p>
-                </div>
-                <div className="text-2xl font-bold">:</div>
-                <div className="text-center">
-                  <div className="bg-black text-white px-6 py-4 rounded-lg text-2xl md:text-3xl font-bold min-w-[80px]">
-                    59
-                  </div>
-                  <p className="text-sm mt-2 font-medium">Seconds</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto">
-              {dealProducts.slice(0, 6).map((product) => (
-                <EcommerceProductCard key={product.id} product={product} />
-              ))}
-            </div>
-
-            <div className="text-center mt-12">
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-base">
-                <Link href="/products">
-                  View All Deals <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="py-16 md:py-20 bg-gradient-to-r from-[#1e3a8a] to-[#3b82f6] relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1 text-white z-10">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance leading-tight">
-                New Auriga Racing Hoodies
-              </h2>
-              <p className="text-base md:text-lg mb-6 text-balance leading-relaxed">
-                Look stylish and fabulous during the winters supporting a suave and elegant Auriga Racing hoodies in
-                Navy Blue color.
-              </p>
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-base">
-                <Link href="/products">
-                  Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-            <div className="flex-1 relative h-[400px] w-full">
-              <Suspense
-                fallback={
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bd9131]"></div>
-                  </div>
-                }
-              >
-                <Hoodie3D />
-              </Suspense>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {categories && categories.length > 0 && (
-        <section className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 uppercase tracking-wide">SHOP BY CATEGORY</h2>
-              <p className="text-base text-muted-foreground">Explore Our Complete Product Range</p>
-            </div>
-
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
-              {categories.map((category) => (
-                <Link key={category.id} href={`/products/category/${category.slug}`}>
-                  <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 h-full">
-                    <div className="aspect-square bg-muted overflow-hidden relative">
-                      <Image
-                        src={getImageKitUrl(category.image_url, { height: 400, width: 400 || "/placeholder.svg" })}
-                        alt={category.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <CardHeader className="text-center">
-                      <CardTitle className="text-lg group-hover:text-[#bd9131] transition-colors">
-                        {category.name}
-                      </CardTitle>
-                      {category.description && (
-                        <CardDescription className="line-clamp-2 leading-relaxed text-sm">
-                          {category.description}
-                        </CardDescription>
-                      )}
-                    </CardHeader>
-                    <CardContent className="text-center">
-                      <Button className="w-full bg-[#bd9131] hover:bg-[#a17d27] text-white text-sm">
-                        Shop Now <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="py-16 md:py-20 bg-gradient-to-br from-neutral-900 to-black text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row-reverse items-center gap-8">
-            <div className="flex-1">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance leading-tight">
-                Auriga Racing Ankle Booties
-              </h2>
-              <p className="text-base md:text-lg mb-6 text-balance leading-relaxed text-gray-200">
-                Auriga Racing Ankle Booties are made with special kind of fabric bonded with superfine microfiber Lycra
-                inside the booties making it the most advance product for the anti-friction and anti-blisters properties
-                for your feet.
-              </p>
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-base">
-                <Link href="/products">
-                  Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-            <div className="flex-1 relative h-[400px] w-full">
-              <Bootie3D />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {inlineProducts && inlineProducts.length > 0 && (
-        <section className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 uppercase tracking-wide">INLINE SPEED SKATING</h2>
-              <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-                Discover our premium collection of inline speed skating equipment
-              </p>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
-              {inlineProducts.slice(0, 8).map((product: any) => (
-                <EcommerceProductCard key={product.id} product={product} variant="compact" />
-              ))}
-            </div>
-
-            <div className="text-center mt-12">
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-lg">
-                <Link href="/products/category/inline-speed-skating">
-                  View All Products <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Pro Inline Skate Boots Banner 1 */}
-      <section className="py-16 md:py-20 bg-gradient-to-r from-[#bd9131] to-[#a17d27] text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance leading-tight">
-                Auriga Racing Pro Inline Skate Boots
-              </h2>
-              <p className="text-base md:text-lg mb-6 text-balance leading-relaxed">
-                Auriga Racing Pro Inline Skate Boots are designed in India and produced by some of the finest leather
-                craftsmen, purely handmade with love using the finest Japanese Carbon Fiber layered unilaterally and
-                microfiber leather upper bonded with the genuine leather.
-              </p>
-              <Button asChild size="lg" className="bg-black hover:bg-neutral-800 text-white px-8 py-6 text-base">
-                <Link href="/products">
-                  Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-            <div className="flex-1 relative h-[400px] w-full">
-              <Suspense
-                fallback={
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-                  </div>
-                }
-              >
-                <BootBanner3D />
-              </Suspense>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Helmets Full Width Banner */}
-      <section className="relative h-[400px] md:h-[500px] bg-black overflow-hidden group">
+    <div className="min-h-screen bg-background">
+      {/* Hero */}
+      <section className="relative h-[440px] w-full overflow-hidden bg-black md:h-[500px]">
         <Image
-          src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&h=1080&fit=crop"
-          alt="Speed Skating Helmets"
+          src="/home/hero-skater.png"
+          alt="Professional speed skater racing on a track"
           fill
-          className="object-cover opacity-70 group-hover:scale-105 transition-transform duration-700"
+          priority
+          className="object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent flex items-center">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-4 animate-slide-in-left">Premium Helmets</h2>
-            <p className="text-xl text-white/90 max-w-xl animate-slide-in-left animation-delay-200">
-              Aerodynamic design for maximum performance
+        <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
+
+        {/* Speed streak motion lines */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-full overflow-hidden" aria-hidden="true">
+          <span className="absolute top-[28%] h-[2px] w-24 bg-gradient-to-r from-transparent via-[#e0b64f] to-transparent animate-speed-streak" />
+          <span className="absolute top-[52%] h-[2px] w-32 bg-gradient-to-r from-transparent via-white/70 to-transparent animate-speed-streak [animation-delay:0.8s]" />
+          <span className="absolute top-[74%] h-[2px] w-20 bg-gradient-to-r from-transparent via-[#e0b64f] to-transparent animate-speed-streak [animation-delay:1.6s]" />
+        </div>
+
+        {/* Faint wheel mark watermark */}
+        <SkateWheelMark className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 text-white/10 animate-spin-slow" />
+
+        <div className="container relative mx-auto flex h-full items-center px-4">
+          <div className="max-w-sm rounded-xl bg-background/95 p-6 shadow-2xl backdrop-blur-sm md:p-7">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#bd9131] animate-hud-pulse" />
+              Auriga Racing &mdash; 2025 Collection
             </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 md:py-20 bg-gradient-to-br from-neutral-400 to-neutral-600 text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row-reverse items-center gap-8">
-            <div className="flex-1">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance leading-tight">
-                Auriga Racing Aero Helmets
-              </h2>
-              <p className="text-lg md:text-xl mb-6 text-balance leading-relaxed">
-                Auriga Racing Aero helmets delivers not just the aerodynamics but pure speed and unmatched performance.
-                These helmets have showed improved performance during the wind tunnel testings.
-              </p>
-              <Button asChild size="lg" className="bg-white hover:bg-neutral-100 text-neutral-800 px-8 py-6 text-lg">
-                <Link href="/products">
-                  Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-            <div className="flex-1 relative h-[400px] w-full">
-              <Helmet3D />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Shop by Collection Section */}
-      <section className="py-16 md:py-24 bg-muted/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-6xl font-bold mb-4 uppercase tracking-wide">SHOP BY COLLECTION</h2>
-            <p className="text-lg text-muted-foreground">Discover our specialized equipment collections</p>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto">
-            {["Boots", "Frames", "Wheels", "Bearings", "Helmets", "Skate Packages"].map((collection) => (
-              <Card key={collection} className="overflow-hidden group hover:shadow-xl transition-all duration-300">
-                <div className="aspect-square bg-gradient-to-br from-neutral-100 to-neutral-200 relative overflow-hidden">
-                  <Image
-                    src={getImageKitUrl(
-                      `/.jpg?key=i4odi&height=400&width=400&query=${collection.toLowerCase() || "/placeholder.svg"}`,
-                    )}
-                    alt={collection}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl">{collection}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <Button asChild className="w-full bg-[#bd9131] hover:bg-[#a17d27] text-white">
-                    <Link href="/products">
-                      Explore <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Explore Skate Packages Section */}
-      {packagesProducts && packagesProducts.length > 0 && (
-        <section className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold mb-4 uppercase tracking-wide">EXPLORE SKATE PACKAGES</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Complete skating solutions for every level
-              </p>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto">
-              {packagesProducts.map((product: any) => (
-                <Link key={product.id} href={`/products/${product.slug}`}>
-                  <Card className="h-full hover:shadow-lg transition-all duration-300 group">
-                    <div className="relative aspect-square bg-muted overflow-hidden">
-                      <Image
-                        src={getImageKitUrl(product.image_url, { height: 400, width: 400 || "/placeholder.svg" })}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      {product.discount_percentage && product.discount_percentage > 0 && (
-                        <div className="absolute top-3 right-3 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
-                          SAVE {product.discount_percentage}%
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="line-clamp-2">{product.name}</CardTitle>
-                      {product.brand && <CardDescription>{product.brand}</CardDescription>}
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-2xl font-bold text-[#bd9131]">${(product.price_in_cents / 100).toFixed(2)}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-
-            <div className="text-center mt-12">
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-lg">
-                <Link href="/products">
-                  View All Packages <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="py-16 md:py-20 bg-white text-neutral-900">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1 relative h-[400px] w-full">
-              <CadetSkate3D />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance leading-tight">
-                Auriga Racing Cadet inline Skates 4x90 / 3x110
-              </h2>
-              <p className="text-lg md:text-xl mb-6 text-balance leading-relaxed">
-                This skate offers versatility and transformation of a three wheels to four wheels&apos; race setup in
-                the same skate package.
-              </p>
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-lg">
-                <Link href="/products">
-                  Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Boots Full Width Banner */}
-      <section className="relative h-[400px] md:h-[500px] bg-black overflow-hidden group">
-        <Image
-          src="https://images.unsplash.com/photo-1542281286-9e0a16bb7366?w=1920&h=1080&fit=crop"
-          alt="Inline Skate Boots"
-          fill
-          className="object-cover opacity-70 group-hover:scale-105 transition-transform duration-700"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent flex items-center">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-4 animate-slide-in-left">Precision Boots</h2>
-            <p className="text-xl text-white/90 max-w-xl animate-slide-in-left animation-delay-200">
-              Handcrafted perfection for elite athletes
+            <h1 className="mt-2 font-serif text-3xl font-bold uppercase leading-[1.08] tracking-tight text-foreground md:text-4xl text-balance">
+              Precision Engineered. Race Proven.
+            </h1>
+            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground leading-relaxed">
+              Dominate the track. Explore our elite skating tech.
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Auriga Racing Boots Section */}
-      {bootsProducts && bootsProducts.length > 0 && (
-        <section className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold mb-4 uppercase tracking-wide">AURIGA RACING BOOTS</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Engineered for champions, crafted with precision
-              </p>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
-              {bootsProducts.slice(0, 8).map((product: any) => (
-                <Link key={product.id} href={`/products/${product.slug}`}>
-                  <Card className="h-full hover:shadow-lg transition-all duration-300 group">
-                    <div className="relative aspect-square bg-muted overflow-hidden">
-                      <Image
-                        src={getImageKitUrl(product.image_url, { height: 400, width: 400 || "/placeholder.svg" })}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="line-clamp-2 text-base">{product.name}</CardTitle>
-                      {product.brand && <CardDescription className="text-sm">{product.brand}</CardDescription>}
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xl font-bold text-[#bd9131]">${(product.price_in_cents / 100).toFixed(2)}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-
-            <div className="text-center mt-12">
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-lg">
-                <Link href="/products">
-                  View All Boots <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Pro Inline Skate Boots Banner 2 */}
-      <section className="py-16 md:py-20 bg-gradient-to-br from-neutral-500 to-neutral-700 text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row-reverse items-center gap-8">
-            <div className="flex-1">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance leading-tight">
-                Auriga Racing Pro Inline Skate Boots
-              </h2>
-              <p className="text-lg md:text-xl mb-6 text-balance leading-relaxed">
-                Auriga Racing Pro Inline Skate Boots are designed in India and produced by some of the finest leather
-                craftsmen, purely handmade with love using the finest Japanese Carbon Fiber layered unilaterally and
-                microfiber leather upper bonded with the genuine leather.
-              </p>
-              <Button asChild size="lg" className="bg-white hover:bg-neutral-100 text-neutral-800 px-8 py-6 text-lg">
-                <Link href="/products">
-                  Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-            <div className="flex-1 relative h-[400px] w-full">
-              <BootGrey3D />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Frames Full Width Banner */}
-      <section className="relative h-[400px] md:h-[500px] bg-black overflow-hidden group">
-        <Image
-          src="https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=1920&h=1080&fit=crop"
-          alt="Inline Skate Frames"
-          fill
-          className="object-cover opacity-70 group-hover:scale-105 transition-transform duration-700"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent flex items-center">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-4 animate-slide-in-left">Performance Frames</h2>
-            <p className="text-xl text-white/90 max-w-xl animate-slide-in-left animation-delay-200">
-              Built for speed and stability
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Auriga Racing Frames Collection Section */}
-      {framesProducts && framesProducts.length > 0 && (
-        <section className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold mb-4 uppercase tracking-wide">
-                AURIGA RACING FRAMES COLLECTION
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Advanced engineering for competitive edge
-              </p>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
-              {framesProducts.slice(0, 8).map((product: any) => (
-                <Link key={product.id} href={`/products/${product.slug}`}>
-                  <Card className="h-full hover:shadow-lg transition-all duration-300 group">
-                    <div className="relative aspect-square bg-muted overflow-hidden">
-                      <Image
-                        src={getImageKitUrl(product.image_url, { height: 400, width: 400 || "/placeholder.svg" })}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="line-clamp-2 text-base">{product.name}</CardTitle>
-                      {product.brand && <CardDescription className="text-sm">{product.brand}</CardDescription>}
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xl font-bold text-[#bd9131]">${(product.price_in_cents / 100).toFixed(2)}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-
-            <div className="text-center mt-12">
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-lg">
-                <Link href="/products">
-                  View All Frames <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* OCCULT Frames Banner Section */}
-      <section className="py-16 md:py-24 bg-black text-white relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance leading-tight">
-                Auriga Racing &apos;OCCULT&apos; 4x110 Inline Skate Frames
-              </h2>
-              <p className="text-lg md:text-xl mb-6 text-balance leading-relaxed">
-                Auriga Racing &apos;OCCULT&apos; frames are solid frames, specially designed and engineered for
-                exceptional performance in intense high-speed racing.
-              </p>
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-lg">
-                <Link href="/products">
-                  Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-            <div className="flex-1 relative h-[400px] w-full">
-              <Frame3DClouds />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Wheels Full Width Banner */}
-      <section className="relative h-[400px] md:h-[500px] bg-black overflow-hidden group">
-        <Image
-          src="https://images.unsplash.com/photo-1461897104016-0b3b00cc81ee?w=1920&h=1080&fit=crop"
-          alt="Inline Skate Wheels"
-          fill
-          className="object-cover opacity-70 group-hover:scale-105 transition-transform duration-700"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent flex items-center">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-4 animate-slide-in-left">High-Speed Wheels</h2>
-            <p className="text-xl text-white/90 max-w-xl animate-slide-in-left animation-delay-200">
-              Engineered for champions
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Inline Skate Wheels Section */}
-      {wheelsProducts && wheelsProducts.length > 0 && (
-        <section className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold mb-4 uppercase tracking-wide">INLINE SKATE WHEELS</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                High-performance wheels for every condition
-              </p>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
-              {wheelsProducts.slice(0, 8).map((product: any) => (
-                <Link key={product.id} href={`/products/${product.slug}`}>
-                  <Card className="h-full hover:shadow-lg transition-all duration-300 group">
-                    <div className="relative aspect-square bg-muted overflow-hidden">
-                      <Image
-                        src={getImageKitUrl(product.image_url, { height: 400, width: 400 || "/placeholder.svg" })}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="line-clamp-2 text-base">{product.name}</CardTitle>
-                      {product.brand && <CardDescription className="text-sm">{product.brand}</CardDescription>}
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xl font-bold text-[#bd9131]">${(product.price_in_cents / 100).toFixed(2)}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-
-            <div className="text-center mt-12">
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-lg">
-                <Link href="/products">
-                  View All Wheels <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* MPC Storm Surge Banner */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row-reverse items-center gap-8">
-            <div className="flex-1">
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance leading-tight">
-                MPC Storm Surge Inline Skate Wheels 100mm XFirm (8pcs)
-              </h2>
-              <p className="text-lg md:text-xl mb-6 text-balance leading-relaxed">
-                Own the road in the rain. MPC Storm Surge inline skate wheels are the best ever produced specially for
-                the rain conditions.
-              </p>
-              <Button asChild size="lg" className="bg-[#bd9131] hover:bg-[#a17d27] text-white px-8 py-6 text-lg">
-                <Link href="/products">
-                  Shop Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-            <div className="flex-1 relative h-[400px] w-full">
-              <Wheel3D />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Latest News Section */}
-      <section className="py-16 md:py-24 bg-muted/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-6xl font-bold mb-4 uppercase tracking-wide">
-              LATEST NEWS FROM AURIGA RACING
-            </h2>
-            <p className="text-lg text-muted-foreground">Stay updated with our latest announcements and stories</p>
-          </div>
-
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto">
-            {[1, 2, 3].map((item) => (
-              <Card key={item} className="overflow-hidden hover:shadow-xl transition-shadow">
-                <div className="aspect-video bg-muted relative">
-                  <Image
-                    src={getImageKitUrl(
-                      `breaking-news-headline.png?key=83qof&height=400&width=600&query=news ${item || "/placeholder.svg"}`,
-                    )}
-                    alt={`News ${item}`}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <CardHeader>
-                  <div className="text-sm text-muted-foreground mb-2">December 2024</div>
-                  <CardTitle className="text-xl">Latest Updates from Auriga Racing</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4 leading-relaxed">
-                    Discover what&apos;s new in the world of speed skating and our latest product innovations.
-                  </p>
-                  <Button asChild variant="link" className="text-[#bd9131] px-0">
-                    <Link href="#">
-                      Read More <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Button asChild size="lg" variant="outline" className="px-8 py-6 text-lg bg-transparent">
-              <Link href="/blog">View All News</Link>
+            <Button asChild size="sm" className="mt-5 rounded-md bg-[#bd9131] px-6 text-white hover:bg-[#a17d27]">
+              <Link href="/products">Shop Now</Link>
             </Button>
           </div>
         </div>
+
+        {/* New Collection badge */}
+        <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg bg-background/95 px-3 py-2 shadow-xl backdrop-blur-sm">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#bd9131]">New</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-foreground">Collection</p>
+          </div>
+          <div
+            className="h-6 w-6 rounded"
+            style={{
+              backgroundImage: "repeating-conic-gradient(#000 0% 25%, #fff 0% 50%)",
+              backgroundSize: "6px 6px",
+            }}
+            aria-hidden="true"
+          />
+        </div>
       </section>
 
-      <section className="bg-gradient-to-br from-[#bd9131]/10 to-neutral-50 py-16 md:py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
-            <Card className="text-center border-none shadow-lg bg-white hover:shadow-xl transition-shadow">
-              <CardHeader>
-                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#bd9131]/20">
-                  <Truck className="h-10 w-10 text-[#bd9131]" />
-                </div>
-                <CardTitle className="text-xl font-bold">Free Delivery</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed">For all orders over $99 within India</p>
-              </CardContent>
-            </Card>
+      {/* Trust bar */}
+      <section className="relative overflow-hidden border-y border-border/60 bg-neutral-950 text-white">
+        <SkateWheelMark className="pointer-events-none absolute -right-6 top-1/2 hidden h-20 w-20 -translate-y-1/2 text-white/[0.06] animate-spin-slow md:block" />
+        <div className="container relative mx-auto grid grid-cols-2 gap-3 px-4 py-3 sm:grid-cols-4">
+          {trustBar.map((item) => {
+            const Icon = item.icon
+            return (
+              <div key={item.label} className="flex items-center justify-center gap-2">
+                <Icon className="h-4 w-4 shrink-0 text-[#e0b64f]" />
+                <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-300">
+                  {item.label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </section>
 
-            <Card className="text-center border-none shadow-lg bg-white hover:shadow-xl transition-shadow">
-              <CardHeader>
-                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#bd9131]/20">
-                  <Clock className="h-10 w-10 text-[#bd9131]" />
-                </div>
-                <CardTitle className="text-xl font-bold">30 Days Return</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed">If goods have problems</p>
-              </CardContent>
-            </Card>
+      {/* Featured Products carousel */}
+      {featuredProducts && featuredProducts.length > 0 && (
+        <FeaturedProductsCarousel products={featuredProducts} />
+      )}
 
-            <Card className="text-center border-none shadow-lg bg-white hover:shadow-xl transition-shadow">
-              <CardHeader>
-                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#bd9131]/20">
-                  <Shield className="h-10 w-10 text-[#bd9131]" />
-                </div>
-                <CardTitle className="text-xl font-bold">Secure Payment</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed">100% secure payment</p>
-              </CardContent>
-            </Card>
+      {/* Best Sellers */}
+      {bestSellers && bestSellers.length > 0 && (
+        <section className="relative overflow-hidden bg-muted/40 py-10 md:py-14">
+          <SkateWheelMark className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 text-foreground/[0.04] animate-spin-slow" />
+          <div className="container relative mx-auto px-4">
+            <div className="mb-6 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">
+                  Top Rated
+                </p>
+                <h2 className="mt-1 font-serif text-2xl font-bold text-foreground md:text-3xl">Best Sellers</h2>
+              </div>
+              <Link
+                href="/products"
+                className="hidden items-center gap-1 text-xs font-semibold uppercase tracking-wide text-[#bd9131] hover:text-[#a17d27] sm:flex"
+              >
+                View All <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+              {bestSellers.map((product) => (
+                <EcommerceProductCard key={product.id} product={product} variant="compact" />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
-            <Card className="text-center border-none shadow-lg bg-white hover:shadow-xl transition-shadow">
-              <CardHeader>
-                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#bd9131]/20">
-                  <Headphones className="h-10 w-10 text-[#bd9131]" />
+      {/* New Arrivals */}
+      <section className="relative overflow-hidden bg-background py-10 md:py-14">
+        <div
+          className="pointer-events-none absolute -left-8 bottom-0 h-24 w-48 opacity-[0.05]"
+          style={{
+            backgroundImage: "repeating-linear-gradient(-45deg, #bd9131 0px, #bd9131 2px, transparent 2px, transparent 12px)",
+          }}
+          aria-hidden="true"
+        />
+        <div className="container relative mx-auto px-4">
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Fresh Off the Line</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+              New Arrivals
+            </h2>
+          </div>
+
+          <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
+            {newArrivals.map((item) => (
+              <div
+                key={item.title}
+                className="group flex flex-col overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-border/60 transition-shadow duration-300 hover:shadow-lg"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                  <Image
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.title}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
                 </div>
-                <CardTitle className="text-xl font-bold">24/7 Support</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed">Dedicated support team</p>
-              </CardContent>
-            </Card>
+                <div className="flex flex-1 flex-col p-4">
+                  <h3 className="font-serif text-base font-bold text-foreground">{item.title}</h3>
+                  <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+                  <Button
+                    asChild
+                    size="sm"
+                    className="mt-3 w-fit rounded-md bg-[#bd9131] px-4 text-xs text-white hover:bg-[#a17d27]"
+                  >
+                    <Link href={item.href}>Shop Now</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-gradient-to-br from-black to-neutral-900 text-white py-16 md:py-24">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-balance">Ready to Elevate Your Performance?</h2>
-          <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto text-balance leading-relaxed">
-            Join thousands of athletes who trust Auriga Racing for world-class speed skating equipment
-          </p>
-          <Button asChild size="lg" className="text-lg px-10 py-6 bg-[#bd9131] hover:bg-[#a17d27] text-white">
-            <Link href="/products">
-              Start Shopping <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
+      {/* Limited Time Offers */}
+      {dealProducts && dealProducts.length > 0 && (
+        <section className="relative overflow-hidden bg-neutral-950 py-10 text-white md:py-14">
+          <div
+            className="absolute -left-16 -top-16 h-40 w-40 rotate-12 opacity-20"
+            style={{
+              backgroundImage: "repeating-conic-gradient(#e0b64f 0% 25%, transparent 0% 50%)",
+              backgroundSize: "16px 16px",
+            }}
+            aria-hidden="true"
+          />
+          <div className="container relative mx-auto px-4">
+            <div className="mb-6 flex items-end justify-between gap-4">
+              <div>
+                <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#e0b64f]">
+                  <Flame className="h-3 w-3" /> Limited Time
+                </p>
+                <h2 className="mt-1 font-serif text-2xl font-bold md:text-3xl">Race Day Offers</h2>
+              </div>
+              <Link
+                href="/products?deal=true"
+                className="hidden items-center gap-1 text-xs font-semibold uppercase tracking-wide text-[#e0b64f] hover:text-white sm:flex"
+              >
+                Shop Deals <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+              {dealProducts.map((product) => (
+                <EcommerceProductCard key={product.id} product={product} variant="compact" />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Shop by Collection */}
+      <section className="relative overflow-hidden bg-background py-10 md:py-14">
+        <SkateWheelMark className="pointer-events-none absolute -left-12 top-1/3 h-48 w-48 text-foreground/[0.035] animate-spin-slow" />
+        <div className="container relative mx-auto px-4">
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Curated Gear</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold uppercase tracking-wide text-foreground md:text-3xl">
+              Shop by Collection
+            </h2>
+          </div>
+
+          <div className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-2">
+            {collections.map((collection) => (
+              <Link
+                key={collection.label}
+                href={collection.href}
+                className="group relative block h-40 overflow-hidden rounded-xl bg-black md:h-48"
+              >
+                <Image
+                  src={collection.image || "/placeholder.svg"}
+                  alt={collection.label}
+                  fill
+                  className="object-cover opacity-80 transition-all duration-500 group-hover:scale-105 group-hover:opacity-90"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <h3 className="font-serif text-lg font-bold text-white">{collection.label}</h3>
+                  <span className="mt-0.5 inline-flex items-center text-xs font-medium text-[#e0b64f] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    Explore <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Precision Boots feature */}
+      <section className="relative overflow-hidden bg-neutral-950 py-10 text-white md:py-14">
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(45deg, #333 0px, #333 2px, transparent 2px, transparent 10px)",
+          }}
+          aria-hidden="true"
+        />
+        <SkateWheelMark className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 text-[#e0b64f]/10 animate-spin-slow" />
+        <div className="container relative mx-auto px-4">
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#e0b64f]">Signature Series</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold uppercase tracking-wide md:text-3xl">
+              Precision Boots
+            </h2>
+          </div>
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row">
+            <div className="relative h-52 w-full flex-1 md:h-64">
+              <div
+                className="absolute inset-0 opacity-60"
+                style={{
+                  background: "radial-gradient(circle at center, rgba(189,145,49,0.25), transparent 65%)",
+                }}
+                aria-hidden="true"
+              />
+              <Image
+                src="/home/precision-boot.png"
+                alt="Auriga Racing Pro carbon fiber boot"
+                fill
+                className="relative object-contain"
+              />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-serif text-xl font-bold text-[#e0b64f]">Auriga Racing Pro</h3>
+              <ul className="mt-3 space-y-2.5">
+                {["Heat-moldable carbon", "Integrated ankle support", "High-strength materials"].map((feature) => (
+                  <li key={feature} className="flex items-center gap-2.5 text-sm text-neutral-200">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#bd9131]">
+                      <Check className="h-3 w-3 text-white" />
+                    </span>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Button asChild size="sm" className="mt-5 rounded-md bg-[#bd9131] px-6 text-white hover:bg-[#a17d27]">
+                <Link href="/products/category/boots">Shop Now</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Performance Frames feature */}
+      <section className="relative overflow-hidden bg-neutral-900 py-10 text-white md:py-14">
+        <div className="container relative mx-auto px-4">
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row">
+            <div className="flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#e0b64f]">Performance Frames</p>
+              <h2 className="mt-2 font-serif text-2xl font-bold leading-tight md:text-3xl text-balance">
+                Auriga Racing OCCULT Frames
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-neutral-300">
+                Laser-engraved, precision-machined aluminum frames engineered for exceptional performance in
+                intense high-speed racing.
+              </p>
+              <Button asChild size="sm" className="mt-5 rounded-md bg-[#bd9131] px-6 text-white hover:bg-[#a17d27]">
+                <Link href="/products/category/frames">Shop Now</Link>
+              </Button>
+            </div>
+            <div className="relative h-44 w-full flex-1 md:h-56">
+              <span className="absolute top-[20%] h-[2px] w-16 bg-gradient-to-r from-transparent via-[#e0b64f] to-transparent animate-speed-streak" />
+              <span className="absolute top-[70%] h-[2px] w-20 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-speed-streak [animation-delay:1s]" />
+              <Image src="/home/performance-frame.png" alt="Auriga Racing OCCULT frame" fill className="relative object-contain" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Race-Ready Kits feature */}
+      <section className="relative overflow-hidden bg-muted/40 py-10 md:py-14">
+        <div
+          className="absolute -right-10 top-6 hidden h-20 w-60 -rotate-12 opacity-70 md:block"
+          style={{
+            backgroundImage: "repeating-conic-gradient(#171717 0% 25%, #e0b64f 0% 50%)",
+            backgroundSize: "20px 20px",
+          }}
+          aria-hidden="true"
+        />
+        <div className="container relative mx-auto px-4">
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row">
+            <div className="flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Complete Setup</p>
+              <h2 className="mt-1 font-serif text-2xl font-bold uppercase tracking-wide text-foreground md:text-3xl text-balance">
+                Race-Ready Kits
+              </h2>
+              <h3 className="mt-2 text-lg font-bold text-foreground">Auriga Racing Cadet Inline Skate</h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                The quality and versatility of a complete race setup for both training and competition, with
+                transformation from a three-wheel to four-wheel configuration.
+              </p>
+              <Button asChild size="sm" className="mt-5 rounded-md bg-[#bd9131] px-6 text-white hover:bg-[#a17d27]">
+                <Link href="/products">Shop Now</Link>
+              </Button>
+            </div>
+            <div className="relative h-44 w-full flex-1 md:h-56">
+              <Image src="/home/cadet-skate.png" alt="Auriga Racing Cadet inline skate" fill className="object-contain" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="relative overflow-hidden bg-background py-10 md:py-14">
+        <SkateWheelMark className="pointer-events-none absolute -bottom-16 right-1/4 h-40 w-40 text-foreground/[0.035] animate-spin-slow" />
+        <div className="container relative mx-auto px-4">
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">Trusted On Track</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold text-foreground md:text-3xl">What Athletes Say</h2>
+          </div>
+          <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
+            {testimonials.map((t) => (
+              <div
+                key={t.name}
+                className="flex flex-col rounded-xl border border-border/60 bg-card p-5 shadow-sm"
+              >
+                <Quote className="h-5 w-5 text-[#bd9131]/50" />
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">{t.quote}</p>
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-border">
+                    <Image src={t.image || "/placeholder.svg"} alt={t.name} fill className="object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                  <div className="ml-auto flex items-center gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-3 w-3 fill-[#bd9131] text-[#bd9131]" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Auriga Racing */}
+      <section className="relative overflow-hidden bg-muted/40 py-10 md:py-14">
+        <SkateWheelMark className="pointer-events-none absolute -left-10 -top-10 h-36 w-36 text-foreground/[0.04] animate-spin-slow" />
+        <SkateWheelMark className="pointer-events-none absolute -bottom-14 right-0 h-40 w-40 text-foreground/[0.04] animate-spin-slow [animation-direction:reverse]" />
+        <div className="container relative mx-auto px-4">
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">The Difference</p>
+            <h2 className="mt-1 font-serif text-2xl font-bold text-foreground md:text-3xl text-balance">
+              Why Choose Auriga Racing
+            </h2>
+          </div>
+          <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {whyChoose.map((item) => {
+              const Icon = item.icon
+              return (
+                <div key={item.title} className="flex flex-col items-center text-center">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#bd9131]/15">
+                    <Icon className="h-5 w-5 text-[#bd9131]" />
+                  </div>
+                  <h3 className="text-sm font-bold text-foreground">{item.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.description}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Race Stats strip */}
+      <section className="relative overflow-hidden bg-neutral-950 py-8 text-white md:py-10">
+        <div
+          className="absolute inset-x-0 top-0 h-1"
+          style={{ background: "linear-gradient(90deg, transparent, #bd9131, transparent)" }}
+          aria-hidden="true"
+        />
+        <span
+          className="pointer-events-none absolute top-1/2 h-[1px] w-24 -translate-y-1/2 bg-gradient-to-r from-transparent via-[#e0b64f]/60 to-transparent animate-speed-streak"
+          aria-hidden="true"
+        />
+        <div className="container relative mx-auto grid grid-cols-2 gap-6 px-4 text-center sm:grid-cols-4">
+          {[
+            { value: "12,400+", label: "Athletes Equipped" },
+            { value: "38", label: "Countries Shipped" },
+            { value: "4.9/5", label: "Average Rating" },
+            { value: "07", label: "World Records Set" },
+          ].map((stat) => (
+            <div key={stat.label} className="flex flex-col items-center">
+              <span className="font-serif text-2xl font-bold text-[#e0b64f] md:text-3xl">{stat.value}</span>
+              <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
+                {stat.label}
+              </span>
+            </div>
+          ))}
         </div>
       </section>
     </div>
