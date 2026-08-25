@@ -115,8 +115,22 @@ export default async function OrderDetailPage({ params }: { params: { id: string
               <div className="mt-6 pt-4 border-t space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>${(order.total_amount_in_cents / 100).toFixed(2)}</span>
+                  <span>
+                    ${((order.total_amount_in_cents - (order.shipping_fee_in_cents || 0)) / 100).toFixed(2)}
+                  </span>
                 </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Shipping{order.courier_name ? ` (${order.courier_name})` : ""}
+                  </span>
+                  <span>${((order.shipping_fee_in_cents || 0) / 100).toFixed(2)}</span>
+                </div>
+                {order.estimated_delivery_days && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Estimated Delivery</span>
+                    <span>{order.estimated_delivery_days}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between font-semibold text-lg">
                   <span>Total</span>
                   <span>${(order.total_amount_in_cents / 100).toFixed(2)}</span>
@@ -126,7 +140,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
           </Card>
 
           <div className="space-y-6">
-            {tracking && <OrderTrackingDisplay tracking={tracking} />}
+            {tracking && <OrderTrackingDisplay tracking={tracking} orderId={order.id} />}
 
             <Card>
               <CardHeader>

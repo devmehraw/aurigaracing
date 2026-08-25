@@ -65,7 +65,17 @@ export interface Order {
     state: string
     zip: string
     country: string
+    phone?: string
+    email?: string
   }
+  phone_verified?: boolean
+  shipping_fee_in_cents?: number
+  estimated_delivery_days?: string
+  courier_name?: string
+  shiprocket_order_id?: number
+  shiprocket_shipment_id?: number
+  shiprocket_courier_id?: number
+  awb_code?: string
   created_at: string
   updated_at: string
   user?: User

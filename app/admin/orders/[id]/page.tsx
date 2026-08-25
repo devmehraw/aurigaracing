@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { ChevronLeft, Package, User, MapPin, CreditCard, Calendar } from "lucide-react"
 import { format } from "date-fns"
+import { AdminShiprocketPanel } from "@/components/admin-shiprocket-panel"
 
 export default async function AdminOrderDetailPage({
   params,
@@ -179,8 +180,22 @@ export default async function AdminOrderDetailPage({
               <p className="text-sm font-medium">Order Status</p>
               <p className="text-sm text-muted-foreground">{order.status}</p>
             </div>
+            <div>
+              <p className="text-sm font-medium">Phone Verified</p>
+              <p className="text-sm text-muted-foreground">{order.phone_verified ? "Yes" : "No"}</p>
+            </div>
           </CardContent>
         </Card>
+
+        <AdminShiprocketPanel
+          orderId={order.id}
+          shiprocketShipmentId={order.shiprocket_shipment_id}
+          shiprocketOrderId={order.shiprocket_order_id}
+          awbCode={order.awb_code}
+          courierName={order.courier_name}
+          estimatedDeliveryDays={order.estimated_delivery_days}
+          shippingFeeInCents={order.shipping_fee_in_cents}
+        />
       </div>
 
       <Card>

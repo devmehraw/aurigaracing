@@ -3,8 +3,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Package, Truck, CheckCircle, Clock, MapPin } from "lucide-react"
+import { RefreshTrackingButton } from "@/components/refresh-tracking-button"
 
 interface OrderTrackingDisplayProps {
+  orderId?: string
   tracking: {
     tracking_number?: string
     carrier?: string
@@ -31,17 +33,20 @@ const statusColors = {
   delivered: "bg-green-500",
 }
 
-export function OrderTrackingDisplay({ tracking }: OrderTrackingDisplayProps) {
+export function OrderTrackingDisplay({ tracking, orderId }: OrderTrackingDisplayProps) {
   const Icon = statusIcons[tracking.status as keyof typeof statusIcons] || Clock
   const statusColor = statusColors[tracking.status as keyof typeof statusColors] || "bg-gray-500"
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Icon className="h-5 w-5" />
-          Order Tracking
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Icon className="h-5 w-5" />
+            Order Tracking
+          </CardTitle>
+          {orderId && <RefreshTrackingButton orderId={orderId} />}
+        </div>
         <CardDescription>Track your order status and location</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

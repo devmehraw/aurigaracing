@@ -2,15 +2,18 @@
 
 import type React from "react"
 import { createCheckoutSession } from "@/app/actions/stripe"
-import { useState } from "react"
+import { checkShippingServiceability } from "@/app/actions/shipping"
+import { sendPhoneOtp, verifyPhoneOtp } from "@/app/actions/otp"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 import type { CartItem, User } from "@/lib/types"
-import { MapPin } from "lucide-react"
+import { MapPin, ShieldCheck, Truck, Loader2, CheckCircle2 } from "lucide-react"
 import { countries } from "@/lib/countries"
 
 interface Address {
@@ -27,18 +30,33 @@ interface Address {
   is_default: boolean
 }
 
+type ServiceabilityState =
+  | { status: "idle" }
+  | { status: "checking" }
+  | { status: "error"; message: string }
+  | { status: "unserviceable" }
+  | {
+      status: "serviceable"
+      shippingFeeInCents: number
+      etaDays?: string
+      courierName?: string
+      courierId?: number
+    }
+
 export function CheckoutForm({
   cartItems,
   user,
   subtotal,
   addresses,
   onSubmit,
+  onShippingChange,
 }: {
   cartItems: CartItem[]
   user: User | null
   subtotal: number
   addresses: Address[]
   onSubmit?: (isLoading: boolean, error: string | null) => void
+  onShippingChange?: (shippingFeeInCents: number) => void
 }) {
   const [useNewAddress, setUseNewAddress] = useState(addresses.length === 0)
   const [selectedAddressId, setSelectedAddressId] = useState(
@@ -61,6 +79,105 @@ export function CheckoutForm({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Shiprocket pincode serviceability check
+  const [serviceability, setServiceability] = useState<ServiceabilityState>({ status: "idle" })
+
+  // Phone OTP verification (demo mode: the code is returned and shown on screen
+  // instead of being sent via SMS, since no SMS provider is connected yet)
+  const [otpSent, setOtpSent] = useState(false)
+  const [demoOtpCode, setDemoOtpCode] = useState<string | null>(null)
+  const [otpInput, setOtpInput] = useState("")
+  const [otpError, setOtpError] = useState<string | null>(null)
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [phoneVerified, setPhoneVerified] = useState(false)
+  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null)
+
+  const selectedAddress = !useNewAddress ? addresses.find((addr) => addr.id === selectedAddressId) : undefined
+  const effectivePhone = selectedAddress?.phone || formData.phone
+  const effectivePostalCode = selectedAddress?.postal_code || formData.postalCode
+
+  // Re-check serviceability whenever the relevant postal code changes, and
+  // reset phone verification if the phone number changes.
+  useEffect(() => {
+    setServiceability({ status: "idle" })
+  }, [effectivePostalCode])
+
+  useEffect(() => {
+    if (verifiedPhone && verifiedPhone !== effectivePhone) {
+      setPhoneVerified(false)
+      setOtpSent(false)
+      setDemoOtpCode(null)
+      setOtpInput("")
+    }
+  }, [effectivePhone, verifiedPhone])
+
+  useEffect(() => {
+    if (serviceability.status === "serviceable") {
+      onShippingChange?.(serviceability.shippingFeeInCents)
+    } else {
+      onShippingChange?.(0)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceability])
+
+  const handleCheckServiceability = async () => {
+    if (!effectivePostalCode) {
+      setServiceability({ status: "error", message: "Enter a PIN / postal code first" })
+      return
+    }
+    setServiceability({ status: "checking" })
+    const result = await checkShippingServiceability(effectivePostalCode, cartItems.length)
+    if (result.error) {
+      setServiceability({ status: "error", message: result.error })
+      return
+    }
+    if (!result.serviceable) {
+      setServiceability({ status: "unserviceable" })
+      return
+    }
+    setServiceability({
+      status: "serviceable",
+      shippingFeeInCents: result.shippingFeeInCents!,
+      etaDays: result.etaDays,
+      courierName: result.courierName,
+      courierId: result.courierId,
+    })
+  }
+
+  const handleSendOtp = async () => {
+    if (!effectivePhone) {
+      setOtpError("Enter a phone number first")
+      return
+    }
+    setOtpLoading(true)
+    setOtpError(null)
+    const result = await sendPhoneOtp(effectivePhone)
+    setOtpLoading(false)
+    if (result.error) {
+      setOtpError(result.error)
+      return
+    }
+    setOtpSent(true)
+    setDemoOtpCode(result.demoCode || null)
+  }
+
+  const handleVerifyOtp = async () => {
+    if (!otpInput) {
+      setOtpError("Enter the verification code")
+      return
+    }
+    setOtpLoading(true)
+    setOtpError(null)
+    const result = await verifyPhoneOtp(effectivePhone, otpInput)
+    setOtpLoading(false)
+    if (result.error) {
+      setOtpError(result.error)
+      return
+    }
+    setPhoneVerified(true)
+    setVerifiedPhone(effectivePhone)
+  }
+
   const updateParentState = (loading: boolean, errorMsg: string | null) => {
     setIsLoading(loading)
     setError(errorMsg)
@@ -69,6 +186,17 @@ export function CheckoutForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (serviceability.status !== "serviceable") {
+      updateParentState(false, "Please check delivery availability for your PIN / postal code")
+      return
+    }
+
+    if (!phoneVerified) {
+      updateParentState(false, "Please verify your phone number before placing the order")
+      return
+    }
+
     updateParentState(true, null)
 
     try {
@@ -86,6 +214,7 @@ export function CheckoutForm({
             zip: selectedAddress.postal_code,
             country: selectedAddress.country,
             phone: selectedAddress.phone,
+            email: formData.email,
           }
         }
       } else {
@@ -98,10 +227,17 @@ export function CheckoutForm({
           zip: formData.postalCode,
           country: formData.country,
           phone: formData.phone,
+          email: formData.email,
         }
       }
 
-      const result = await createCheckoutSession(shippingData)
+      const result = await createCheckoutSession(shippingData, {
+        phoneVerified: true,
+        shippingFeeInCents: serviceability.shippingFeeInCents,
+        etaDays: serviceability.etaDays,
+        courierName: serviceability.courierName,
+        courierId: serviceability.courierId,
+      })
 
       if (result.error) {
         updateParentState(false, result.error)
@@ -349,6 +485,124 @@ export function CheckoutForm({
                 </div>
               </div>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Truck className="h-5 w-5" />
+            Delivery Availability
+          </CardTitle>
+          <CardDescription>Check delivery time and shipping cost for your PIN / postal code</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 text-sm">
+              <span className="text-muted-foreground">PIN / postal code: </span>
+              <span className="font-medium">{effectivePostalCode || "Not entered yet"}</span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCheckServiceability}
+              disabled={serviceability.status === "checking" || !effectivePostalCode}
+            >
+              {serviceability.status === "checking" ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Truck className="h-4 w-4 mr-2" />
+              )}
+              Check delivery
+            </Button>
+          </div>
+
+          {serviceability.status === "serviceable" && (
+            <div className="flex items-center justify-between rounded-md border border-primary/20 bg-primary/5 p-3 text-sm">
+              <div className="flex items-center gap-2 text-primary">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>
+                  Deliverable{serviceability.courierName ? ` via ${serviceability.courierName}` : ""}
+                  {serviceability.etaDays ? ` in ${serviceability.etaDays}` : ""}
+                </span>
+              </div>
+              <span className="font-medium">${(serviceability.shippingFeeInCents / 100).toFixed(2)} shipping</span>
+            </div>
+          )}
+
+          {serviceability.status === "unserviceable" && (
+            <p className="text-sm text-destructive">
+              Sorry, we can&apos;t deliver to this PIN / postal code yet.
+            </p>
+          )}
+
+          {serviceability.status === "error" && <p className="text-sm text-destructive">{serviceability.message}</p>}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5" />
+            Verify Phone Number
+          </CardTitle>
+          <CardDescription>We verify your phone number to help prevent failed deliveries</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {phoneVerified ? (
+            <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 p-3 text-sm text-primary">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Phone number {effectivePhone} verified</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 text-sm">
+                  <span className="text-muted-foreground">Phone: </span>
+                  <span className="font-medium">{effectivePhone || "Not entered yet"}</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSendOtp}
+                  disabled={otpLoading || !effectivePhone}
+                >
+                  {otpLoading && !otpSent ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {otpSent ? "Resend code" : "Send OTP"}
+                </Button>
+              </div>
+
+              {otpSent && (
+                <div className="space-y-2">
+                  {demoOtpCode && (
+                    <p className="text-xs text-muted-foreground">
+                      Demo mode (no SMS provider connected): your verification code is{" "}
+                      <span className="font-mono font-semibold text-foreground">{demoOtpCode}</span>
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Enter 6-digit code"
+                      value={otpInput}
+                      onChange={(e) => setOtpInput(e.target.value)}
+                      maxLength={6}
+                      className="max-w-[160px]"
+                    />
+                    <Button type="button" size="sm" onClick={handleVerifyOtp} disabled={otpLoading || !otpInput}>
+                      {otpLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Verify
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {otpError && <p className="text-sm text-destructive">{otpError}</p>}
+            </>
           )}
         </CardContent>
       </Card>
