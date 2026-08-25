@@ -3,7 +3,6 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SkateWheelMark } from "@/components/decor/skate-wheel-mark"
 
@@ -122,17 +121,7 @@ export function HomeHeroSlider() {
         </div>
       </div>
 
-      <div className="absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 rounded-full text-white hover:bg-white/15 hover:text-white"
-          onClick={() => goTo(activeIndex - 1)}
-          aria-label="Previous banner"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+      <div className="absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center rounded-full bg-black/35 px-3 py-2 backdrop-blur-sm">
         <div className="flex items-center gap-1.5" role="tablist" aria-label="Select banner">
           {slides.map((slide, index) => (
             <button
@@ -148,26 +137,6 @@ export function HomeHeroSlider() {
             />
           ))}
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 rounded-full text-white hover:bg-white/15 hover:text-white"
-          onClick={() => goTo(activeIndex + 1)}
-          aria-label="Next banner"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 rounded-full text-white hover:bg-white/15 hover:text-white"
-          onClick={() => setIsPaused((paused) => !paused)}
-          aria-label={isPaused ? "Play banner rotation" : "Pause banner rotation"}
-        >
-          {isPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
-        </Button>
       </div>
 
       <div className="absolute bottom-4 right-4 z-40 hidden items-center gap-2 rounded-lg bg-background/95 px-3 py-2 shadow-xl backdrop-blur-sm sm:flex">
