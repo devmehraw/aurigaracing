@@ -20,6 +20,7 @@ import { createClient } from "@/lib/supabase/server"
 import { FeaturedProductsCarousel } from "@/components/featured-products-carousel"
 import { EcommerceProductCard } from "@/components/ecommerce-product-card"
 import { SkateWheelMark } from "@/components/decor/skate-wheel-mark"
+import { HomeHeroSlider } from "@/components/home-hero-slider"
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -124,61 +125,8 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero */}
-      <section className="relative h-[440px] w-full overflow-hidden bg-black md:h-[500px]">
-        <Image
-          src="/home/hero-skater.png"
-          alt="Professional speed skater racing on a track"
-          fill
-          priority
-          className="object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
-
-        {/* Speed streak motion lines */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-full overflow-hidden" aria-hidden="true">
-          <span className="absolute top-[28%] h-[2px] w-24 bg-gradient-to-r from-transparent via-[#e0b64f] to-transparent animate-speed-streak" />
-          <span className="absolute top-[52%] h-[2px] w-32 bg-gradient-to-r from-transparent via-white/70 to-transparent animate-speed-streak [animation-delay:0.8s]" />
-          <span className="absolute top-[74%] h-[2px] w-20 bg-gradient-to-r from-transparent via-[#e0b64f] to-transparent animate-speed-streak [animation-delay:1.6s]" />
-        </div>
-
-        {/* Faint wheel mark watermark */}
-        <SkateWheelMark className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 text-white/10 animate-spin-slow" />
-
-        <div className="container relative mx-auto flex h-full items-center px-4">
-          <div className="max-w-sm rounded-xl bg-background/95 p-6 shadow-2xl backdrop-blur-sm md:p-7">
-            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#bd9131]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#bd9131] animate-hud-pulse" />
-              Auriga Racing &mdash; 2025 Collection
-            </p>
-            <h1 className="mt-2 font-serif text-3xl font-bold uppercase leading-[1.08] tracking-tight text-foreground md:text-4xl text-balance">
-              Precision Engineered. Race Proven.
-            </h1>
-            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground leading-relaxed">
-              Dominate the track. Explore our elite skating tech.
-            </p>
-            <Button asChild size="sm" className="mt-5 rounded-md bg-[#bd9131] px-6 text-white hover:bg-[#a17d27]">
-              <Link href="/products">Shop Now</Link>
-            </Button>
-          </div>
-        </div>
-
-        {/* New Collection badge */}
-        <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg bg-background/95 px-3 py-2 shadow-xl backdrop-blur-sm">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#bd9131]">New</p>
-            <p className="text-xs font-bold uppercase tracking-wide text-foreground">Collection</p>
-          </div>
-          <div
-            className="h-6 w-6 rounded"
-            style={{
-              backgroundImage: "repeating-conic-gradient(#000 0% 25%, #fff 0% 50%)",
-              backgroundSize: "6px 6px",
-            }}
-            aria-hidden="true"
-          />
-        </div>
-      </section>
+      {/* Hero slider */}
+      <HomeHeroSlider />
 
       {/* Trust bar */}
       <section className="relative overflow-hidden border-y border-border/60 bg-neutral-950 text-white">
