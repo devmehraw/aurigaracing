@@ -78,7 +78,10 @@ export function EcommerceProductCard({
     <Link href={`/products/${product.slug}`}>
       <Card className="group relative overflow-hidden border-2 border-transparent hover:border-[#bd9131]/30 transition-all duration-500 hover:shadow-2xl hover:shadow-[#bd9131]/20 h-full">
         {/* Image Section */}
-        <div className="relative aspect-square bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-800 overflow-hidden">
+        <div className={cn(
+          "relative bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-800 overflow-hidden",
+          variant === "compact" ? "aspect-[4/3]" : "aspect-square",
+        )}>
           {/* Product Image */}
           <Image
             src={
@@ -107,17 +110,17 @@ export function EcommerceProductCard({
           />
 
           {/* Top Badges */}
-          <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+          <div className="absolute top-2 left-2 z-10 flex flex-col gap-1.5">
             {isOnSale && product.discount_percentage && (
-              <Badge className="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 shadow-lg">
+              <Badge className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold px-2 py-1 shadow-lg">
                 -{product.discount_percentage}% OFF
               </Badge>
             )}
             {product.is_new && (
-              <Badge className="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 shadow-lg">NEW</Badge>
+              <Badge className="bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold px-2 py-1 shadow-lg">NEW</Badge>
             )}
             {product.is_featured && (
-              <Badge className="bg-[#bd9131] hover:bg-[#a17d27] text-white font-bold px-3 py-1.5 shadow-lg flex items-center gap-1">
+              <Badge className="bg-[#bd9131] hover:bg-[#a17d27] text-white text-[10px] font-bold px-2 py-1 shadow-lg flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 FEATURED
               </Badge>
@@ -131,14 +134,14 @@ export function EcommerceProductCard({
               size="icon"
               variant="secondary"
               className={cn(
-                "h-10 w-10 rounded-full shadow-lg backdrop-blur-sm bg-white/90 dark:bg-black/90",
+                "h-8 w-8 rounded-full shadow-lg backdrop-blur-sm bg-white/90 dark:bg-black/90",
                 "opacity-0 group-hover:opacity-100 translate-x-12 group-hover:translate-x-0",
                 "transition-all duration-300 delay-75",
                 isWishlisted && "text-red-500",
               )}
               onClick={handleWishlist}
             >
-              <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
+              <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
             </Button>
 
             {/* Quick View Button */}
@@ -146,13 +149,13 @@ export function EcommerceProductCard({
               size="icon"
               variant="secondary"
               className={cn(
-                "h-10 w-10 rounded-full shadow-lg backdrop-blur-sm bg-white/90 dark:bg-black/90",
+                "h-8 w-8 rounded-full shadow-lg backdrop-blur-sm bg-white/90 dark:bg-black/90",
                 "opacity-0 group-hover:opacity-100 translate-x-12 group-hover:translate-x-0",
                 "transition-all duration-300 delay-100",
               )}
               onClick={handleQuickView}
             >
-              <Eye className="h-5 w-5" />
+              <Eye className="h-4 w-4" />
             </Button>
           </div>
 
@@ -168,9 +171,9 @@ export function EcommerceProductCard({
             <div className="absolute bottom-0 left-0 right-0 p-4 z-10 opacity-0 group-hover:opacity-100 translate-y-12 group-hover:translate-y-0 transition-all duration-500">
               <Button
                 onClick={handleAddToCart}
-                className="w-full bg-[#bd9131] hover:bg-[#a17d27] text-white font-bold py-6 shadow-2xl"
+                className="w-full bg-[#bd9131] hover:bg-[#a17d27] text-white text-xs font-bold py-4 shadow-2xl"
               >
-                <ShoppingCart className="mr-2 h-5 w-5" />
+                <ShoppingCart className="mr-1.5 h-4 w-4" />
                 Add to Cart
               </Button>
             </div>
@@ -178,14 +181,14 @@ export function EcommerceProductCard({
         </div>
 
         {/* Content Section */}
-        <CardContent className="p-4 space-y-3">
+        <CardContent className={cn("space-y-2", variant === "compact" ? "p-3" : "p-3.5")}>
           {/* Brand */}
           {product.brand && (
-            <p className="text-sm text-[#bd9131] font-semibold uppercase tracking-wider">{product.brand}</p>
+            <p className="text-[10px] text-[#bd9131] font-semibold uppercase tracking-wider">{product.brand}</p>
           )}
 
           {/* Product Name */}
-          <h3 className="font-semibold text-base line-clamp-2 min-h-[3rem] group-hover:text-[#bd9131] transition-colors duration-300">
+          <h3 className="font-semibold text-sm leading-snug line-clamp-2 min-h-[2.5rem] group-hover:text-[#bd9131] transition-colors duration-300">
             {product.name}
           </h3>
 
@@ -212,24 +215,24 @@ export function EcommerceProductCard({
           )}
 
           {/* Price Section */}
-          <div className="flex items-center justify-between pt-2 border-t">
+          <div className="flex items-center justify-between pt-1.5 border-t">
             <div className="flex flex-col gap-1">
               {isOnSale ? (
                 <>
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-[#bd9131]">
+<span className="text-lg font-bold text-[#bd9131]">
                       ${(product.price_in_cents / 100).toFixed(2)}
                     </span>
-                    <span className="text-base text-muted-foreground line-through">
+                    <span className="text-xs text-muted-foreground line-through">
                       ${(product.original_price_in_cents! / 100).toFixed(2)}
                     </span>
                   </div>
-                  <span className="text-sm text-green-600 dark:text-green-400 font-semibold">
+                  <span className="text-xs text-green-600 dark:text-green-400 font-semibold">
                     Save ${((product.original_price_in_cents! - product.price_in_cents) / 100).toFixed(2)}
                   </span>
                 </>
               ) : (
-                <span className="text-2xl font-bold text-[#bd9131]">${(product.price_in_cents / 100).toFixed(2)}</span>
+                <span className="text-lg font-bold text-[#bd9131]">${(product.price_in_cents / 100).toFixed(2)}</span>
               )}
             </div>
 
@@ -243,7 +246,7 @@ export function EcommerceProductCard({
 
           {/* Free Shipping Badge */}
           {product.price_in_cents >= 5000 && (
-            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 font-medium">
+            <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 font-medium">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
                 <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
