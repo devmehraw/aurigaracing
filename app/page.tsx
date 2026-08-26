@@ -21,6 +21,7 @@ import { FeaturedProductsCarousel } from "@/components/featured-products-carouse
 import { EcommerceProductCard } from "@/components/ecommerce-product-card"
 import { SkateWheelMark } from "@/components/decor/skate-wheel-mark"
 import { HomeHeroSlider } from "@/components/home-hero-slider"
+import { StaticHomeProductSections } from "@/components/static-home-product-sections"
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -127,6 +128,8 @@ export default async function HomePage() {
     <div className="min-h-screen bg-background">
       {/* Hero slider */}
       <HomeHeroSlider />
+
+      <StaticHomeProductSections />
 
       {false && <section className="relative h-[440px] w-full overflow-hidden bg-black md:h-[500px]">
         <Image
