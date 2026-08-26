@@ -2,15 +2,27 @@
 
 import { stripe } from "@/lib/stripe"
 import { createServerClient } from "@/lib/supabase/server"
+import { createShiprocketOrderForOrder } from "@/app/actions/shipping"
 
-export async function createCheckoutSession(formData: {
-  name: string
-  street: string
-  city: string
-  state: string
-  zip: string
-  country: string
-}) {
+export async function createCheckoutSession(
+  formData: {
+    name: string
+    street: string
+    city: string
+    state: string
+    zip: string
+    country: string
+    phone?: string
+    email?: string
+  },
+  shipping?: {
+    phoneVerified: boolean
+    shippingFeeInCents: number
+    etaDays?: string
+    courierName?: string
+    courierId?: number
+  },
+) {
   const supabase = await createServerClient()
 
   const {
@@ -19,6 +31,10 @@ export async function createCheckoutSession(formData: {
 
   if (!user) {
     return { error: "You must be logged in to checkout" }
+  }
+
+  if (!shipping?.phoneVerified) {
+    return { error: "Please verify your phone number before placing the order" }
   }
 
   try {
@@ -46,8 +62,25 @@ export async function createCheckoutSession(formData: {
       quantity: item.quantity,
     }))
 
+    const shippingFeeInCents = shipping?.shippingFeeInCents || 0
+    if (shippingFeeInCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: `Shipping${shipping?.courierName ? ` (${shipping.courierName})` : ""}`,
+            description: shipping?.etaDays ? `Estimated delivery: ${shipping.etaDays}` : "",
+            images: [],
+          },
+          unit_amount: shippingFeeInCents,
+        },
+        quantity: 1,
+      })
+    }
+
     // Calculate total
-    const totalAmount = cartItems.reduce((sum, item) => sum + item.product.price_in_cents * item.quantity, 0)
+    const subtotal = cartItems.reduce((sum, item) => sum + item.product.price_in_cents * item.quantity, 0)
+    const totalAmount = subtotal + shippingFeeInCents
 
     // Create order in database
     const { data: order, error: orderError } = await supabase
@@ -57,6 +90,11 @@ export async function createCheckoutSession(formData: {
         total_amount_in_cents: totalAmount,
         status: "pending",
         shipping_address: formData,
+        phone_verified: true,
+        shipping_fee_in_cents: shippingFeeInCents,
+        estimated_delivery_days: shipping?.etaDays || null,
+        courier_name: shipping?.courierName || null,
+        shiprocket_courier_id: shipping?.courierId || null,
       })
       .select()
       .single()
@@ -129,6 +167,14 @@ export async function handleSuccessfulPayment(sessionId: string, orderId: string
       } = await supabase.auth.getUser()
       if (user) {
         await supabase.from("cart_items").delete().eq("user_id", user.id)
+      }
+
+      // Push the paid order to Shiprocket for fulfillment. Failures here
+      // don't block the customer's success page — an admin can retry from
+      // the admin order detail page.
+      const shipmentResult = await createShiprocketOrderForOrder(orderId)
+      if (shipmentResult.error) {
+        console.error("[v0] Shiprocket order creation failed:", shipmentResult.error)
       }
 
       return { success: true }
