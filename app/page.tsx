@@ -20,6 +20,7 @@ import { createClient } from "@/lib/supabase/server"
 import { FeaturedProductsCarousel } from "@/components/featured-products-carousel"
 import { EcommerceProductCard } from "@/components/ecommerce-product-card"
 import { SkateWheelMark } from "@/components/decor/skate-wheel-mark"
+import { HomeHeroSlider } from "@/components/home-hero-slider"
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -124,8 +125,10 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero */}
-      <section className="relative h-[440px] w-full overflow-hidden bg-black md:h-[500px]">
+      {/* Hero slider */}
+      <HomeHeroSlider />
+
+      {false && <section className="relative h-[440px] w-full overflow-hidden bg-black md:h-[500px]">
         <Image
           src="/home/hero-skater.png"
           alt="Professional speed skater racing on a track"
@@ -178,7 +181,7 @@ export default async function HomePage() {
             aria-hidden="true"
           />
         </div>
-      </section>
+      </section>}
 
       {/* Trust bar */}
       <section className="relative overflow-hidden border-y border-border/60 bg-neutral-950 text-white">
