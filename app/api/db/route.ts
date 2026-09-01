@@ -70,12 +70,30 @@ export async function POST(request: NextRequest) {
           password: string
           options?: { data?: Record<string, unknown> }
         }
-        const { user, error } = await createUser({ email, password, metadata: options?.data })
-        if (error || !user) {
-          return NextResponse.json({ data: { user: null, session: null }, error: { message: error || "Sign up failed" } })
+        if (!email?.trim() || !password) {
+          return NextResponse.json(
+            { data: { user: null, session: null }, error: { message: "Email and password are required" } },
+            { status: 400 },
+          )
         }
-        await setSession(user.id, user.email, user.role)
-        return NextResponse.json({ data: { user, session: { user } }, error: null })
+
+        try {
+          const { user, error } = await createUser({ email, password, metadata: options?.data })
+          if (error || !user) {
+            return NextResponse.json(
+              { data: { user: null, session: null }, error: { message: error || "Sign up failed" } },
+              { status: error === "User already registered" ? 409 : 400 },
+            )
+          }
+          await setSession(user.id, user.email, user.role)
+          return NextResponse.json({ data: { user, session: { user } }, error: null })
+        } catch (error) {
+          console.error("[v0] Signup database error:", error)
+          return NextResponse.json(
+            { data: { user: null, session: null }, error: { message: "Registration is temporarily unavailable. Please check the database connection and try again." } },
+            { status: 503 },
+          )
+        }
       }
       case "signOut": {
         await clearSession()
