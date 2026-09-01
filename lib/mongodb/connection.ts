@@ -3,7 +3,14 @@ import { MongoClient, type Db } from "mongodb"
 
 // Singleton MongoDB connection. Reused across hot reloads in development
 // and across invocations in production (Node.js runtime only — never edge).
-const uri = process.env.MONGODB_URI
+// Support the primary variable and the project's alternate URI variable.
+// If the dashboard contains the literal text `process.env.MONGODB_URI_2`,
+// treat it as a reference and resolve the actual alternate variable instead.
+const configuredUri = process.env.MONGODB_URI?.trim()
+const uri =
+  configuredUri && !/^process\.env\.[A-Z0-9_]+$/.test(configuredUri)
+    ? configuredUri
+    : process.env.MONGODB_URI_2?.trim()
 const dbName = process.env.MONGODB_DB || "auriga"
 
 let clientPromise: Promise<MongoClient> | null = null
